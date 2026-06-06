@@ -59,8 +59,13 @@
             <div class="bg-white rounded-3xl shadow-xl shadow-green-950/5 border border-green-100 overflow-hidden">
                 <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
                     <div>
-                        <h2 class="text-lg font-bold text-gray-800">Daftar Buku</h2>
-                        <p class="text-sm text-gray-500">Data buku berdasarkan input karyawan.</p>
+                        <h2 class="text-lg font-bold text-gray-800">
+                            Daftar Buku
+                        </h2>
+
+                        <p class="text-sm text-gray-500">
+                            Data buku berdasarkan input karyawan.
+                        </p>
                     </div>
                 </div>
 
@@ -146,6 +151,10 @@
                                             <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200">
                                                 📝 Draft
                                             </span>
+                                        @elseif($book->status == 'Pending')
+                                            <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">
+                                                🚧 Pending
+                                            </span>
                                         @elseif($book->status == 'Selesai')
                                             <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200">
                                                 ✅ Selesai
@@ -163,7 +172,6 @@
                                             {{ $book->note ?? '-' }}
                                         </p>
                                     </td>
-
                                 </tr>
                             @empty
                                 <tr>
@@ -172,9 +180,11 @@
                                             <div class="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center text-4xl mb-4">
                                                 📚
                                             </div>
+
                                             <h3 class="text-lg font-bold text-gray-800">
                                                 Belum ada data buku
                                             </h3>
+
                                             <p class="text-gray-500 mt-1">
                                                 Data buku yang diinputkan karyawan akan tampil di sini.
                                             </p>
@@ -191,7 +201,6 @@
                     {{ $books->links() }}
                 </div>
             </div>
-
         </div>
     </div>
 </x-app-layout>

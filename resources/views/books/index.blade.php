@@ -1,7 +1,3 @@
-@php
-    use Illuminate\Support\Str;
-@endphp
-
 <x-app-layout>
     <div class="p-6 max-w-7xl mx-auto">
 
@@ -33,7 +29,7 @@
             </div>
         @endif
 
-        {{-- FORM TAMBAH COMPACT --}}
+        {{-- FORM TAMBAH --}}
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 mb-8">
 
             <div class="flex items-center justify-between mb-4">
@@ -254,7 +250,6 @@
                                 </td>
 
                                 <td class="p-4">
-
                                     @if($book->status == 'On Progress')
                                         <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
                                             ✍️ On Progress
@@ -276,7 +271,6 @@
                                             {{ $book->status }}
                                         </span>
                                     @endif
-
                                 </td>
 
                                 <td class="p-4 text-gray-600">

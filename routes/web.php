@@ -11,11 +11,44 @@ use App\Http\Controllers\PublishedBookController;
 use App\Models\Attendance;
 use App\Models\WorkProgress;
 use Illuminate\Support\Facades\Route;
-use App\Models\LeaveRequest;
+use Illuminate\Support\Facades\File;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Media Route
+|--------------------------------------------------------------------------
+| Route ini dipakai untuk menampilkan file/foto dari storage/app/public
+| tanpa bergantung penuh pada asset('storage/...').
+|--------------------------------------------------------------------------
+*/
+Route::get('/media/{path}', function ($path) {
+    $path = str_replace('\\', '/', $path);
+    $path = ltrim($path, '/');
+
+    if (str_starts_with($path, 'public/')) {
+        $path = substr($path, strlen('public/'));
+    }
+
+    if (str_starts_with($path, 'storage/')) {
+        $path = substr($path, strlen('storage/'));
+    }
+
+    if (str_contains($path, '..')) {
+        abort(403);
+    }
+
+    $fullPath = storage_path('app/public/' . $path);
+
+    if (! File::exists($fullPath)) {
+        abort(404);
+    }
+
+    return response()->file($fullPath);
+})->where('path', '.*')->name('media.show');
 
 /*
 |--------------------------------------------------------------------------
@@ -45,18 +78,11 @@ Route::get('/dashboard', function () {
         ->latest()
         ->get();
 
-    $rejectedLeave = \App\Models\LeaveRequest::where('user_id', auth()->id())
-    ->where('status', 'rejected')
-    ->where('is_read', false)
-    ->latest()
-    ->first();
-
     return view('dashboard', compact(
-    'attendance',
-    'attendances',
-    'workProgresses',
-    'rejectedLeave'
-));
+        'attendance',
+        'attendances',
+        'workProgresses'
+    ));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 /*
@@ -66,6 +92,19 @@ Route::get('/dashboard', function () {
 */
 Route::middleware(['auth'])->group(function () {
 
+    /*
+    |--------------------------------------------------------------------------
+    | Notification Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::post('/notifications/leave/read', [LeaveRequestController::class, 'markLeaveNotificationsAsRead'])
+        ->name('notifications.leave.read');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Attendance
+    |--------------------------------------------------------------------------
+    */
     Route::post('/absen-masuk', [AttendanceController::class, 'checkIn'])
         ->name('attendance.checkin');
 
@@ -78,6 +117,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/progres-kerja', [AttendanceController::class, 'storeProgress'])
         ->name('work.progress.store');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Work Progress
+    |--------------------------------------------------------------------------
+    */
     Route::get('/work-progress', [WorkProgressController::class, 'index'])
         ->name('work.progress.index');
 
@@ -87,6 +131,11 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/work-progress/{id}', [WorkProgressController::class, 'update'])
         ->name('work.progress.update');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Books
+    |--------------------------------------------------------------------------
+    */
     Route::get('/books', [BookController::class, 'index'])
         ->name('books.index');
 
@@ -99,6 +148,11 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/books/{id}', [BookController::class, 'destroy'])
         ->name('books.destroy');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Published Books
+    |--------------------------------------------------------------------------
+    */
     Route::get('/published-books', [PublishedBookController::class, 'index'])
         ->name('published-books.index');
 
@@ -110,6 +164,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::delete('/published-books/{publishedBook}', [PublishedBookController::class, 'destroy'])
         ->name('published-books.destroy');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Manuscripts
+    |--------------------------------------------------------------------------
+    */
     Route::get('/manuscripts', [ManuscriptController::class, 'index'])
         ->name('manuscripts.index');
 
@@ -122,6 +182,11 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/manuscripts/{id}', [ManuscriptController::class, 'destroy'])
         ->name('manuscripts.destroy');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Leave Request / Izin
+    |--------------------------------------------------------------------------
+    */
     Route::post('/izin', [LeaveRequestController::class, 'store'])
         ->name('leave.store');
 
@@ -134,12 +199,30 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/izin/{id}/reject', [LeaveRequestController::class, 'reject'])
         ->name('admin.leave.reject');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Attendance
+    |--------------------------------------------------------------------------
+    */
     Route::get('/admin/absensi', [AttendanceController::class, 'adminAttendance'])
         ->name('admin.attendance.index');
 
+    Route::get('/admin/riwayat-absen/{user}', [AttendanceController::class, 'employeeHistory'])
+        ->name('admin.attendance.history');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Progress
+    |--------------------------------------------------------------------------
+    */
     Route::get('/admin/progres', [AttendanceController::class, 'adminProgress'])
         ->name('admin.progress.index');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Users
+    |--------------------------------------------------------------------------
+    */
     Route::get('/admin/users', [AdminUserController::class, 'index'])
         ->name('admin.users.index');
 
@@ -149,16 +232,24 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/admin/users/{user}', [AdminUserController::class, 'destroy'])
         ->name('admin.users.destroy');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Manuscripts
+    |--------------------------------------------------------------------------
+    */
     Route::get('/admin/manuscripts', [ManuscriptController::class, 'adminIndex'])
         ->name('admin.manuscripts.index');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Books
+    |--------------------------------------------------------------------------
+    */
     Route::get('/admin/books', [BookController::class, 'adminIndex'])
         ->name('admin.books.index');
-    
+
     Route::get('/admin/published-books', [PublishedBookController::class, 'adminIndex'])
         ->name('admin.published-books.index');
-       Route::get('/admin/riwayat-absen/{user}', [AttendanceController::class, 'employeeHistory'])
-    ->name('admin.attendance.history');
 });
 
 /*
@@ -177,4 +268,4 @@ Route::middleware('auth')->group(function () {
         ->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

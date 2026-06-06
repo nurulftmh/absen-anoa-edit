@@ -37,9 +37,18 @@
                 </div>
             @endif
 
-            {{-- FORM TAMBAH COMPACT --}}
-            <div class="bg-white rounded-3xl shadow-sm border border-green-100 p-5 mb-8">
+            @if ($errors->any())
+                <div class="bg-red-50 border border-red-200 text-red-800 p-4 rounded-2xl mb-5 shadow-sm">
+                    <ul class="list-disc ms-5">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
+            {{-- FORM TAMBAH --}}
+            <div class="bg-white rounded-3xl shadow-sm border border-green-100 p-5 mb-8">
                 <div class="flex items-center justify-between mb-4">
                     <div>
                         <h2 class="text-lg font-bold text-gray-800">
@@ -59,7 +68,6 @@
                     @csrf
 
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-
                         <div>
                             <label class="block mb-1.5 font-semibold text-xs text-gray-600">
                                 Nama Penulis
@@ -86,7 +94,6 @@
                             <label class="block mb-1.5 font-semibold text-xs text-gray-600">
                                 Link Docs
                             </label>
-
                             <input type="url"
                                    name="docs_link"
                                    placeholder="https://docs.google.com/..."
@@ -109,11 +116,9 @@
                                 <option value="Published">Published</option>
                             </select>
                         </div>
-
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-3">
-
                         <div class="md:col-span-2">
                             <label class="block mb-1.5 font-semibold text-xs text-gray-600">
                                 Judul Manuscript
@@ -134,24 +139,22 @@
                                    placeholder="Keterangan singkat"
                                    class="w-full rounded-xl border-gray-200 text-sm py-2.5 focus:border-green-700 focus:ring-green-700">
                         </div>
-
                     </div>
 
                     <div class="mt-3 flex flex-col md:flex-row md:items-end gap-3">
-
                         <div class="flex-1">
                             <label class="block mb-1.5 font-semibold text-xs text-gray-600">
                                 Upload Foto
                             </label>
                             <input type="file"
                                    name="photo"
+                                   accept="image/*"
                                    class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50">
                         </div>
 
                         <button class="bg-green-800 hover:bg-green-900 text-white px-6 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition">
                             Simpan Manuscript
                         </button>
-
                     </div>
                 </form>
             </div>
@@ -212,18 +215,32 @@
 
                         <tbody class="divide-y divide-gray-100">
                             @forelse($manuscripts as $item)
+                                @php
+                                    $photoUrl = null;
+
+                                    if (!empty($item->photo)) {
+                                        $photoPath = str_replace('\\', '/', $item->photo);
+                                        $photoPath = ltrim($photoPath, '/');
+                                        $photoPath = Str::replaceFirst('public/', '', $photoPath);
+                                        $photoPath = Str::replaceFirst('storage/', '', $photoPath);
+
+                                        $photoUrl = route('media.show', ['path' => $photoPath]);
+                                    }
+                                @endphp
+
                                 <tr class="hover:bg-green-50/70 transition">
 
                                     {{-- FOTO --}}
                                     <td class="px-5 py-4">
-                                        @if($item->photo)
+                                        @if($photoUrl)
                                             <div class="flex items-center gap-3">
-                                                <img src="{{ asset('storage/' . $item->photo) }}"
+                                                <img src="{{ $photoUrl }}"
+                                                     alt="Foto Manuscript"
                                                      class="w-16 h-16 object-cover rounded-2xl border border-gray-200 shadow-sm cursor-pointer hover:scale-105 transition"
-                                                     onclick="openImage('{{ asset('storage/' . $item->photo) }}')">
+                                                     onclick="openImage('{{ $photoUrl }}')">
 
                                                 <button type="button"
-                                                        onclick="openImage('{{ asset('storage/' . $item->photo) }}')"
+                                                        onclick="openImage('{{ $photoUrl }}')"
                                                         class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded-xl shadow-sm transition">
                                                     Lihat
                                                 </button>
@@ -407,8 +424,17 @@
                                                     Ganti Foto
                                                 </label>
 
+                                                @if($photoUrl)
+                                                    <div class="mb-2">
+                                                        <img src="{{ $photoUrl }}"
+                                                             alt="Foto Manuscript"
+                                                             class="w-16 h-16 object-cover rounded-2xl border border-gray-200 shadow-sm">
+                                                    </div>
+                                                @endif
+
                                                 <input type="file"
                                                        name="photo"
+                                                       accept="image/*"
                                                        class="w-full border border-gray-200 rounded-2xl p-3 text-sm bg-white">
                                             </div>
 
@@ -460,6 +486,7 @@
 
             <img id="previewImage"
                  src=""
+                 alt="Preview Foto"
                  class="max-h-[90vh] rounded-3xl shadow-2xl border-4 border-white">
         </div>
     </div>

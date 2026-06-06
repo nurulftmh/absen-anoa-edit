@@ -1,32 +1,33 @@
 <x-app-layout>
     <div class="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 py-8">
         <div class="px-6 max-w-7xl mx-auto">
-<div class="mb-5">
-    <form method="GET" action="{{ route('admin.progress.index') }}">
 
-        <div class="flex flex-col md:flex-row gap-3">
+            {{-- SEARCH --}}
+            <div class="mb-5">
+                <form method="GET" action="{{ route('admin.progress.index') }}">
+                    <div class="flex flex-col md:flex-row gap-3">
 
-            <input type="text"
-                   name="search"
-                   value="{{ request('search') }}"
-                   placeholder="Cari nama karyawan atau progres kerja..."
-                   class="w-full rounded-2xl border-gray-200 shadow-sm focus:border-green-700 focus:ring-green-700">
+                        <input type="text"
+                               name="search"
+                               value="{{ request('search') }}"
+                               placeholder="Cari nama karyawan atau progres kerja..."
+                               class="w-full rounded-2xl border-gray-200 shadow-sm focus:border-green-700 focus:ring-green-700">
 
-            <button class="bg-green-800 hover:bg-green-900 text-white px-6 py-3 rounded-2xl font-semibold">
-                Cari
-            </button>
+                        <button class="bg-green-800 hover:bg-green-900 text-white px-6 py-3 rounded-2xl font-semibold">
+                            Cari
+                        </button>
 
-            @if(request('search'))
-                <a href="{{ route('admin.progress.index') }}"
-                   class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-2xl font-semibold text-center">
-                    Reset
-                </a>
-            @endif
+                        @if(request('search'))
+                            <a href="{{ route('admin.progress.index') }}"
+                               class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-2xl font-semibold text-center">
+                                Reset
+                            </a>
+                        @endif
 
-        </div>
+                    </div>
+                </form>
+            </div>
 
-    </form>
-</div>
             {{-- HEADER --}}
             <div class="mb-8 bg-white/80 backdrop-blur rounded-3xl shadow-sm border border-green-100 p-6">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
@@ -174,25 +175,72 @@
                                                 </div>
 
                                                 @if($item->files && $item->files->count())
-                                                    <div class="space-y-2">
+                                                    <div class="space-y-3">
                                                         @foreach($item->files as $file)
-                                                            <a href="{{ asset('storage/' . $file->file_path) }}"
-                                                               target="_blank"
-                                                               class="flex items-center justify-between gap-3 bg-green-50 text-green-800 px-4 py-3 rounded-2xl hover:bg-green-100 border border-green-100 transition">
-                                                                <div class="flex items-center gap-3 min-w-0">
-                                                                    <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm">
-                                                                        📎
+                                                            @php
+                                                                $fileUrl = asset('storage/' . $file->file_path);
+
+                                                                $extension = strtolower(pathinfo($file->file_name, PATHINFO_EXTENSION));
+
+                                                                $isImage = in_array($extension, [
+                                                                    'jpg',
+                                                                    'jpeg',
+                                                                    'png',
+                                                                    'gif',
+                                                                    'webp',
+                                                                    'bmp'
+                                                                ]);
+                                                            @endphp
+
+                                                            @if($isImage)
+                                                                {{-- PREVIEW GAMBAR --}}
+                                                                <div class="bg-green-50 border border-green-100 rounded-2xl p-3">
+
+                                                                    <a href="{{ $fileUrl }}" target="_blank">
+                                                                        <img src="{{ $fileUrl }}"
+                                                                             alt="{{ $file->file_name }}"
+                                                                             class="w-full max-h-72 object-cover rounded-xl border border-green-100 shadow-sm mb-3">
+                                                                    </a>
+
+                                                                    <div class="flex items-center justify-between gap-3">
+                                                                        <div class="flex items-center gap-3 min-w-0">
+                                                                            <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                                                                                🖼️
+                                                                            </div>
+
+                                                                            <span class="truncate text-sm font-semibold text-green-800">
+                                                                                {{ $file->file_name }}
+                                                                            </span>
+                                                                        </div>
+
+                                                                        <a href="{{ $fileUrl }}"
+                                                                           target="_blank"
+                                                                           class="shrink-0 text-xs font-bold text-green-800 hover:underline">
+                                                                            Buka →
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
+                                                            @else
+                                                                {{-- FILE NON-GAMBAR --}}
+                                                                <a href="{{ $fileUrl }}"
+                                                                   target="_blank"
+                                                                   class="flex items-center justify-between gap-3 bg-green-50 text-green-800 px-4 py-3 rounded-2xl hover:bg-green-100 border border-green-100 transition">
+
+                                                                    <div class="flex items-center gap-3 min-w-0">
+                                                                        <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                                                                            📎
+                                                                        </div>
+
+                                                                        <span class="truncate text-sm font-semibold">
+                                                                            {{ $file->file_name }}
+                                                                        </span>
                                                                     </div>
 
-                                                                    <span class="truncate text-sm font-semibold">
-                                                                        {{ $file->file_name }}
+                                                                    <span class="shrink-0 text-xs font-bold">
+                                                                        Buka →
                                                                     </span>
-                                                                </div>
-
-                                                                <span class="shrink-0 text-xs font-bold">
-                                                                    Buka →
-                                                                </span>
-                                                            </a>
+                                                                </a>
+                                                            @endif
                                                         @endforeach
                                                     </div>
                                                 @else

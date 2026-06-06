@@ -32,12 +32,12 @@ class ManuscriptController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'author_name' => 'required',
-            'title' => 'required',
-            'journal' => 'required',
-            'status' => 'required',
-            'description' => 'nullable',
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'author_name' => 'required|string|max:255',
+            'title' => 'required|string',
+            'journal' => 'required|string|max:255',
+            'status' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         $photoPath = null;
@@ -62,12 +62,12 @@ class ManuscriptController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'author_name' => 'required',
-            'title' => 'required',
-            'journal' => 'required',
-            'status' => 'required',
-            'description' => 'nullable',
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'author_name' => 'required|string|max:255',
+            'title' => 'required|string',
+            'journal' => 'required|string|max:255',
+            'status' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         $manuscript = Manuscript::findOrFail($id);

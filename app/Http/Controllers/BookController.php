@@ -25,10 +25,10 @@ class BookController extends Controller
             ->when($dateFrom && $dateTo, function ($query) use ($dateFrom, $dateTo) {
                 $query->whereBetween('entry_date', [$dateFrom, $dateTo]);
             })
-            ->when($dateFrom && !$dateTo, function ($query) use ($dateFrom) {
+            ->when($dateFrom && ! $dateTo, function ($query) use ($dateFrom) {
                 $query->whereDate('entry_date', '>=', $dateFrom);
             })
-            ->when(!$dateFrom && $dateTo, function ($query) use ($dateTo) {
+            ->when(! $dateFrom && $dateTo, function ($query) use ($dateTo) {
                 $query->whereDate('entry_date', '<=', $dateTo);
             })
             ->latest()
@@ -60,10 +60,10 @@ class BookController extends Controller
             ->when($dateFrom && $dateTo, function ($query) use ($dateFrom, $dateTo) {
                 $query->whereBetween('entry_date', [$dateFrom, $dateTo]);
             })
-            ->when($dateFrom && !$dateTo, function ($query) use ($dateFrom) {
+            ->when($dateFrom && ! $dateTo, function ($query) use ($dateFrom) {
                 $query->whereDate('entry_date', '>=', $dateFrom);
             })
-            ->when(!$dateFrom && $dateTo, function ($query) use ($dateTo) {
+            ->when(! $dateFrom && $dateTo, function ($query) use ($dateTo) {
                 $query->whereDate('entry_date', '<=', $dateTo);
             })
             ->latest()
@@ -77,10 +77,10 @@ class BookController extends Controller
     {
         $request->validate([
             'entry_date' => 'required|date',
-            'author_name' => 'required|string',
+            'author_name' => 'required|string|max:255',
             'title' => 'required|string',
             'docs_link' => 'nullable|url',
-            'status' => 'required|string',
+            'status' => 'required|string|max:255',
             'note' => 'nullable|string',
         ]);
 
@@ -101,10 +101,10 @@ class BookController extends Controller
     {
         $request->validate([
             'entry_date' => 'required|date',
-            'author_name' => 'required|string',
+            'author_name' => 'required|string|max:255',
             'title' => 'required|string',
             'docs_link' => 'nullable|url',
-            'status' => 'required|string',
+            'status' => 'required|string|max:255',
             'note' => 'nullable|string',
         ]);
 

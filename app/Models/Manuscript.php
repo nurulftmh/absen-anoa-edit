@@ -15,7 +15,6 @@ class Manuscript extends Model
         'status',
         'description',
         'photo',
-        
     ];
 
     public function user()
