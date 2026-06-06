@@ -113,18 +113,6 @@ class LeaveRequestController extends Controller
             'is_read' => false,
         ]);
 
-        Attendance::updateOrCreate(
-            [
-                'user_id' => $leave->user_id,
-                'date' => $leave->date,
-            ],
-            [
-                'status' => 'alpa',
-                'check_in' => null,
-                'check_out' => null,
-            ]
-        );
-
         try {
             if ($leave->user && $leave->user->email) {
                 Mail::to($leave->user->email)->send(new LeaveStatusMail($leave));
