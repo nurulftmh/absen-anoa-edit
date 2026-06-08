@@ -24,7 +24,7 @@
 
             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
 <div class="mb-5">
-    <form method="GET" action="{{ route('admin.attendance') }}">
+    <form method="GET" action="{{ route('admin.attendance.index') }}">
 
         <div class="flex flex-col md:flex-row gap-3">
 

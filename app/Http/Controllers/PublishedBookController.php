@@ -120,10 +120,24 @@ class PublishedBookController extends Controller
             'title' => 'required|string',
             'isbn' => 'nullable|string|max:255',
             'publisher' => 'nullable|string|max:255',
-            'cover' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'book_pdf' => ($requirePdf ? 'required' : 'nullable') . '|file|mimes:pdf|max:20480',
-            'certificate_archive' => 'nullable|file|mimes:rar,zip|max:20480',
+
+            // Cover maksimal 10 MB
+            'cover' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
+
+            // PDF buku maksimal 100 MB
+            'book_pdf' => ($requirePdf ? 'required' : 'nullable') . '|file|mimes:pdf|max:102400',
+
+            // Sertifikat ZIP/RAR maksimal 100 MB
+            'certificate_archive' => 'nullable|file|mimes:rar,zip,pdf|max:102400',
+
             'note' => 'nullable|string',
+        ], [
+            'cover.max' => 'Ukuran cover maksimal 10 MB.',
+            'book_pdf.required' => 'PDF buku wajib diunggah.',
+            'book_pdf.mimes' => 'File buku harus berupa PDF.',
+            'book_pdf.max' => 'Ukuran PDF buku maksimal 100 MB.',
+            'certificate_archive.mimes' => 'File sertifikat harus berupa RAR, ZIP, atau PDF.',
+            'certificate_archive.max' => 'Ukuran file sertifikat maksimal 100 MB.',
         ]);
 
         unset($data['cover'], $data['book_pdf'], $data['certificate_archive']);
