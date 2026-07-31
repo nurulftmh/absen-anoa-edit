@@ -184,7 +184,7 @@
                     </p>
 
                     <div class="mt-6 space-y-3">
-                        <a href="{{ route('work.progress.page') }}"
+                        <a href="{{ route('work.progress.index') }}"
                            class="group flex items-center justify-between p-4 rounded-2xl bg-blue-50 hover:bg-blue-100 border border-blue-100 transition">
                             <div>
                                 <p class="font-bold text-blue-800">Progres Kerja</p>

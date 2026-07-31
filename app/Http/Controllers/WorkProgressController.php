@@ -22,7 +22,7 @@ class WorkProgressController extends Controller
             ->latest()
             ->get();
 
-        return view('work-progress.index', compact(
+        return view('work-progress', compact(
             'attendance',
             'workProgresses'
         ));
@@ -34,7 +34,7 @@ class WorkProgressController extends Controller
             'description' => 'required|string',
 
             // Maksimal 100 MB per file
-            'files.*' => 'nullable|file|max:102400',
+            'files.*' => 'nullable|file|max:204800',
         ], [
             'description.required' => 'Deskripsi progres kerja wajib diisi.',
             'files.*.file' => 'Lampiran harus berupa file yang valid.',
@@ -78,7 +78,7 @@ class WorkProgressController extends Controller
             'description' => 'required|string',
 
             // Maksimal 100 MB per file
-            'files.*' => 'nullable|file|max:102400',
+            'files.*' => 'nullable|file|max:204800',
         ], [
             'description.required' => 'Deskripsi progres kerja wajib diisi.',
             'files.*.file' => 'Lampiran harus berupa file yang valid.',

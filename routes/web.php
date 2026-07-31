@@ -111,25 +111,23 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/absen-pulang', [AttendanceController::class, 'checkOut'])
         ->name('attendance.checkout');
 
-    Route::get('/progres-kerja', [AttendanceController::class, 'progressPage'])
-        ->name('work.progress.page');
-
-    Route::post('/progres-kerja', [AttendanceController::class, 'storeProgress'])
-        ->name('work.progress.store');
-
     /*
     |--------------------------------------------------------------------------
     | Work Progress
     |--------------------------------------------------------------------------
     */
-    Route::get('/work-progress', [WorkProgressController::class, 'index'])
+    Route::get('/progres-kerja', [WorkProgressController::class, 'index'])
         ->name('work.progress.index');
 
-    Route::post('/work-progress', [WorkProgressController::class, 'store'])
-        ->name('work.progress.store.alt');
+    Route::post('/progres-kerja', [WorkProgressController::class, 'store'])
+        ->name('work.progress.store');
 
-    Route::patch('/work-progress/{id}', [WorkProgressController::class, 'update'])
+    Route::patch('/progres-kerja/{id}', [WorkProgressController::class, 'update'])
         ->name('work.progress.update');
+
+    Route::get('/work-progress', function () {
+        return redirect()->route('work.progress.index');
+    })->name('work.progress.old');
 
     /*
     |--------------------------------------------------------------------------

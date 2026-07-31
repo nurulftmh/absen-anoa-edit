@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Models\User;
 use App\Models\WorkProgress;
 use App\Models\WorkFile;
+use App\Models\LeaveRequest;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -13,7 +14,71 @@ class AttendanceController extends Controller
 {
     public function index()
     {
-        return $this->adminAttendance();
+        return $this->adminAttendance(request());
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Otomatis Membuat Status ALPA
+    |--------------------------------------------------------------------------
+    | Fungsi ini akan mengecek data user role "user".
+    | Jika pada tanggal sebelumnya tidak ada data absensi,
+    | maka sistem otomatis membuat status "alpa".
+    |
+    | Catatan:
+    | - Jika sudah ada data hadir, tidak diubah.
+    | - Jika sudah ada data izin, tidak diubah.
+    | - Jika ada leave request approved, status dibuat "izin", bukan "alpa".
+    |--------------------------------------------------------------------------
+    */
+    private function syncAutomaticAlpa(?User $specificUser = null)
+    {
+        $endDate = Carbon::yesterday();
+
+        $usersQuery = User::where('role', 'user');
+
+        if ($specificUser) {
+            $usersQuery->where('id', $specificUser->id);
+        }
+
+        $usersQuery->chunkById(100, function ($users) use ($endDate) {
+            foreach ($users as $user) {
+                $startDate = $user->created_at
+                    ? Carbon::parse($user->created_at)->startOfDay()
+                    : Carbon::yesterday();
+
+                if ($startDate->gt($endDate)) {
+                    continue;
+                }
+
+                $date = $startDate->copy();
+
+                while ($date->lte($endDate)) {
+                    $dateString = $date->toDateString();
+
+                    $attendance = Attendance::where('user_id', $user->id)
+                        ->where('date', $dateString)
+                        ->first();
+
+                    if (! $attendance) {
+                        $approvedLeave = LeaveRequest::where('user_id', $user->id)
+                            ->whereDate('date', $dateString)
+                            ->where('status', 'approved')
+                            ->exists();
+
+                        Attendance::create([
+                            'user_id' => $user->id,
+                            'date' => $dateString,
+                            'check_in' => null,
+                            'check_out' => null,
+                            'status' => $approvedLeave ? 'izin' : 'alpa',
+                        ]);
+                    }
+
+                    $date->addDay();
+                }
+            }
+        });
     }
 
     public function checkIn()
@@ -28,7 +93,7 @@ class AttendanceController extends Controller
             return back()->with('error', 'Kamu sudah melakukan absen masuk hari ini.');
         }
 
-        if ($attendance && !$attendance->check_in) {
+        if ($attendance && ! $attendance->check_in) {
             $attendance->update([
                 'check_in' => now()->format('H:i:s'),
                 'check_out' => null,
@@ -45,13 +110,12 @@ class AttendanceController extends Controller
             'check_out' => null,
             'status' => 'hadir',
         ]);
-        \App\Models\LeaveRequest::where('user_id', auth()->id())
-    ->where('status', 'rejected')
-    ->update([
-        'is_read' => true
-    ]);
 
-return back()->with('success', 'Absen masuk berhasil.');
+        LeaveRequest::where('user_id', auth()->id())
+            ->where('status', 'rejected')
+            ->update([
+                'is_read' => true,
+            ]);
 
         return back()->with('success', 'Absen masuk berhasil.');
     }
@@ -64,7 +128,7 @@ return back()->with('success', 'Absen masuk berhasil.');
             ->where('date', $today)
             ->first();
 
-        if (!$attendance || !$attendance->check_in) {
+        if (! $attendance || ! $attendance->check_in) {
             return back()->with('error', 'Kamu belum melakukan absen masuk.');
         }
 
@@ -100,7 +164,7 @@ return back()->with('success', 'Absen masuk berhasil.');
             ->where('date', $today)
             ->first();
 
-        if (!$attendance || !$attendance->check_in) {
+        if (! $attendance || ! $attendance->check_in) {
             return back()->with('error', 'Silakan absen masuk dulu.');
         }
 
@@ -125,64 +189,65 @@ return back()->with('success', 'Absen masuk berhasil.');
     }
 
     public function adminAttendance(Request $request)
-{
-    $search = $request->search;
-    $today = Carbon::today()->toDateString();
+    {
+        $this->syncAutomaticAlpa();
 
-    $users = User::where('role', 'user')
-        ->when($search, function ($query) use ($search) {
-            $query->where('name', 'like', '%' . $search . '%')
-                ->orWhere('email', 'like', '%' . $search . '%');
-        })
-        ->paginate(15)
-        ->withQueryString();
+        $search = $request->search;
+        $today = Carbon::today()->toDateString();
 
-    $attendanceData = collect();
+        $users = User::where('role', 'user')
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('name', 'like', '%' . $search . '%')
+                        ->orWhere('email', 'like', '%' . $search . '%');
+                });
+            })
+            ->paginate(15)
+            ->withQueryString();
 
-    foreach ($users as $user) {
+        $attendanceData = collect();
 
-        $attendance = Attendance::where('user_id', $user->id)
-            ->where('date', $today)
-            ->first();
+        foreach ($users as $user) {
+            $attendance = Attendance::where('user_id', $user->id)
+                ->where('date', $today)
+                ->first();
 
-        $attendanceData->push((object) [
-            'user' => $user,
-            'date' => $today,
-            'check_in' => $attendance?->check_in,
-            'check_out' => $attendance?->check_out,
-            'status' => $attendance
-                ? ($attendance->status ?? 'hadir')
-                : 'alpa',
+            $attendanceData->push((object) [
+                'user' => $user,
+                'date' => $today,
+                'check_in' => $attendance?->check_in,
+                'check_out' => $attendance?->check_out,
+                'status' => $attendance
+                    ? ($attendance->status ?? 'hadir')
+                    : 'alpa',
+            ]);
+        }
+
+        return view('admin.attendance', [
+            'attendances' => $attendanceData,
+            'users' => $users,
+            'search' => $search,
         ]);
     }
 
-    return view('admin.attendance', [
-        'attendances' => $attendanceData,
-        'users' => $users,
-        'search' => $search,
-    ]);
-}
+    public function adminProgress(Request $request)
+    {
+        $search = $request->search;
 
-   public function adminProgress(Request $request)
-{
-    $search = $request->search;
+        $progress = WorkProgress::with(['attendance.user', 'files'])
+            ->when($search, function ($query) use ($search) {
+                $query->where('description', 'like', '%' . $search . '%')
+                    ->orWhereHas('attendance.user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', '%' . $search . '%')
+                            ->orWhere('email', 'like', '%' . $search . '%');
+                    });
+            })
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
 
-    $progress = WorkProgress::with(['attendance.user', 'files'])
-        ->when($search, function ($query) use ($search) {
-
-            $query->where('description', 'like', '%' . $search . '%')
-                ->orWhereHas('attendance.user', function ($userQuery) use ($search) {
-
-                    $userQuery->where('name', 'like', '%' . $search . '%')
-                        ->orWhere('email', 'like', '%' . $search . '%');
-                });
-        })
-        ->latest()
-        ->paginate(15)
-        ->withQueryString();
-
-    return view('admin.progress', compact('progress', 'search'));
-}
+        return view('admin.progress', compact('progress', 'search'));
+    }
 
     public function progressPage()
     {
@@ -203,15 +268,14 @@ return back()->with('success', 'Absen masuk berhasil.');
     }
 
     public function employeeHistory(User $user)
-{
-    $attendances = Attendance::where('user_id', $user->id)
-        ->orderBy('date', 'desc')
-        ->orderBy('created_at', 'desc')
-        ->paginate(15);
+    {
+        $this->syncAutomaticAlpa($user);
 
-    return view('admin.attendance-history', compact('user', 'attendances'));
-}
+        $attendances = Attendance::where('user_id', $user->id)
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
 
-
-    
+        return view('admin.attendance-history', compact('user', 'attendances'));
+    }
 }
