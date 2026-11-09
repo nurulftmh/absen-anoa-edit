@@ -12,6 +12,7 @@ use App\Models\Attendance;
 use App\Models\WorkProgress;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\File;
+use App\Http\Controllers\PublicBookController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -85,7 +86,34 @@ Route::get('/dashboard', function () {
     ));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+
 /*
+|--------------------------------------------------------------------------
+| Public Articel
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/manuscript-published',
+    [ManuscriptController::class, 'publicPublished']
+)->name('public.manuscripts');
+
+/*
+|--------------------------------------------------------------------------
+| Public Books
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/buku', [PublicBookController::class, 'books'])
+    ->name('public.books');
+
+Route::get('/buku-terbit', [PublicBookController::class, 'publishedBooks'])
+    ->name('public.published-books');
+
+/*
+
+
+
 |--------------------------------------------------------------------------
 | User & Admin Routes
 |--------------------------------------------------------------------------

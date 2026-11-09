@@ -49,13 +49,43 @@
             </a>
 
             <nav class="hidden lg:flex items-center gap-8 text-sm font-semibold text-green-50">
-                <a href="#home" class="hover:text-yellow-300 transition">Home</a>
-                <a href="#tentang" class="hover:text-yellow-300 transition">Tentang Kami</a>
-                <a href="#layanan" class="hover:text-yellow-300 transition">Layanan</a>
-                <a href="#platform" class="hover:text-yellow-300 transition">Platform</a>
-                <a href="#portofolio" class="hover:text-yellow-300 transition">Portofolio</a>
-                <a href="#kontak" class="hover:text-yellow-300 transition">Kontak</a>
-            </nav>
+
+    <a href="#home"
+       class="hover:text-yellow-300 transition">
+        Home
+    </a>
+
+    <a href="#tentang"
+       class="hover:text-yellow-300 transition">
+        Tentang Kami
+    </a>
+
+    <a href="#layanan"
+       class="hover:text-yellow-300 transition">
+        Layanan
+    </a>
+
+    <a href="{{ route('public.books') }}"
+       class="hover:text-yellow-300 transition">
+        Buku
+    </a>
+
+    <a href="{{ route('public.published-books') }}"
+   class="hover:text-yellow-300 transition">
+    Buku Terbit
+</a>
+
+<a href="{{ route('public.manuscripts') }}"
+   class="hover:text-yellow-300 transition">
+    Manuscript Published
+</a>
+
+<a href="#kontak"
+   class="hover:text-yellow-300 transition">
+    Kontak
+</a>
+
+</nav>
 
             <a href="#platform"
                class="hidden md:inline-flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-green-950 font-bold px-5 py-3 rounded-2xl shadow transition">

@@ -62,8 +62,7 @@
                             <th class="p-4 text-left">Alasan</th>
                             <th class="p-4 text-left">Bukti</th>
                             <th class="p-4 text-left">Status</th>
-                            <th class="p-4 text-left">Setujui / Tolak</th>
-                            <th class="p-4 text-left">permintaan Terbaru</th>
+                            <th class="p-4 text-left">Permintaan Terbaru</th>
                         </tr>
                     </thead>
 
@@ -135,42 +134,7 @@
 
                                 </td>
 
-                                {{-- SETUJUI / TOLAK --}}
-                                <td class="p-4">
-
-                                    <div class="flex gap-2 flex-wrap">
-
-                                        {{-- APPROVE --}}
-                                        <form action="{{ route('admin.leave.approve', $item->id) }}"
-                                              method="POST">
-
-                                            @csrf
-
-                                            <button type="submit"
-                                                    class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">
-                                                Setujui
-                                            </button>
-
-                                        </form>
-
-                                        {{-- REJECT --}}
-                                        <form action="{{ route('admin.leave.reject', $item->id) }}"
-                                              method="POST">
-
-                                            @csrf
-
-                                            <button type="submit"
-                                                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">
-                                                Tolak
-                                            </button>
-
-                                        </form>
-
-                                    </div>
-
-                                </td>
-
-                                {{-- AKSI --}}
+                                {{-- PERMINTAAN TERBARU --}}
                                 <td class="p-4">
 
                                     @if($item->status == 'pending')
@@ -220,7 +184,7 @@
                         @empty
 
                             <tr>
-                                <td colspan="7" class="p-6 text-center text-gray-500">
+                                <td colspan="6" class="p-6 text-center text-gray-500">
                                     Belum ada pengajuan izin.
                                 </td>
                             </tr>

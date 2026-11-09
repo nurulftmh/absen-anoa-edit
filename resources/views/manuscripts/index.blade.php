@@ -170,32 +170,61 @@
                     </div>
 
                     <form action="{{ route('manuscripts.index') }}" method="GET">
-                        <div class="flex flex-col md:flex-row gap-3">
-                            <div class="relative w-full">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                                    🔍
-                                </span>
+    <div class="flex flex-col md:flex-row gap-3">
+        <div class="relative w-full">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                🔍
+            </span>
 
-                                <input type="text"
-                                       name="search"
-                                       value="{{ request('search') }}"
-                                       placeholder="Cari penulis, judul, jurnal, status, atau keterangan..."
-                                       class="w-full pl-11 rounded-2xl border-gray-200 bg-gray-50 shadow-sm focus:bg-white focus:border-green-700 focus:ring-green-700">
-                            </div>
+            <input type="text"
+                   name="search"
+                   value="{{ request('search') }}"
+                   placeholder="Cari penulis, judul, jurnal, atau keterangan..."
+                   class="w-full pl-11 rounded-2xl border-gray-200 bg-gray-50 shadow-sm focus:bg-white focus:border-green-700 focus:ring-green-700">
+        </div>
 
-                            <button type="submit"
-                                    class="bg-green-800 hover:bg-green-900 text-white px-7 py-3 rounded-2xl font-semibold shadow-sm transition">
-                                Cari
-                            </button>
+        <select name="status"
+                class="w-full md:w-52 rounded-2xl border-gray-200 bg-gray-50 shadow-sm focus:bg-white focus:border-green-700 focus:ring-green-700">
+            <option value="">Semua Status</option>
+            <option value="On Progress" {{ request('status') === 'On Progress' ? 'selected' : '' }}>
+                On Progress
+            </option>
+            <option value="Draft" {{ request('status') === 'Draft' ? 'selected' : '' }}>
+                Draft
+            </option>
+            <option value="Submitted" {{ request('status') === 'Submitted' ? 'selected' : '' }}>
+                Submitted
+            </option>
+            <option value="Pending" {{ request('status') === 'Pending' ? 'selected' : '' }}>
+                Pending
+            </option>
+            <option value="Under Review" {{ request('status') === 'Under Review' ? 'selected' : '' }}>
+                Under Review
+            </option>
+            <option value="Accepted" {{ request('status') === 'Accepted' ? 'selected' : '' }}>
+                Accepted
+            </option>
+            <option value="Rejected" {{ request('status') === 'Rejected' ? 'selected' : '' }}>
+                Rejected
+            </option>
+            <option value="Published" {{ request('status') === 'Published' ? 'selected' : '' }}>
+                Published
+            </option>
+        </select>
 
-                            @if(request('search'))
-                                <a href="{{ route('manuscripts.index') }}"
-                                   class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-7 py-3 rounded-2xl font-semibold transition text-center">
-                                    Reset
-                                </a>
-                            @endif
-                        </div>
-                    </form>
+        <button type="submit"
+                class="bg-green-800 hover:bg-green-900 text-white px-7 py-3 rounded-2xl font-semibold shadow-sm transition">
+            Cari
+        </button>
+
+        @if(request('search') || request('status'))
+            <a href="{{ route('manuscripts.index') }}"
+               class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-7 py-3 rounded-2xl font-semibold transition text-center">
+                Reset
+            </a>
+        @endif
+    </div>
+</form>
                 </div>
 
                 <div class="overflow-x-auto">
