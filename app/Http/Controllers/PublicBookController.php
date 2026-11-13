@@ -54,38 +54,56 @@ class PublicBookController extends Controller
     |--------------------------------------------------------------------------
     */
     public function publishedBooks(Request $request)
-    {
-        $search = trim((string) $request->search);
+{
+    $search = trim((string) $request->search);
 
-        $publishedBooks = PublishedBook::query()
-            ->select([
-                'id',
-                'published_date',
-                'author_name',
-                'title',
-                'isbn',
-                'publisher',
-                'cover_path',
-            ])
-            ->when($search, function ($query) use ($search) {
+    $publishedBooks = PublishedBook::query()
 
-                $query->where(function ($q) use ($search) {
+        ->when($search, function ($query) use ($search) {
 
-                    $q->where('title', 'like', '%' . $search . '%')
-                        ->orWhere('author_name', 'like', '%' . $search . '%')
-                        ->orWhere('isbn', 'like', '%' . $search . '%')
-                        ->orWhere('publisher', 'like', '%' . $search . '%');
+            $query->where(function ($q) use ($search) {
 
-                });
+                $q->where(
+                    'title',
+                    'like',
+                    '%' . $search . '%'
+                )
 
-            })
-            ->orderByDesc('published_date')
-            ->paginate(12)
-            ->withQueryString();
+                ->orWhere(
+                    'author_name',
+                    'like',
+                    '%' . $search . '%'
+                )
 
-        return view('public.published-books', compact(
+                ->orWhere(
+                    'isbn',
+                    'like',
+                    '%' . $search . '%'
+                )
+
+                ->orWhere(
+                    'publisher',
+                    'like',
+                    '%' . $search . '%'
+                );
+
+            });
+
+        })
+
+        ->orderByDesc('published_date')
+
+        ->paginate(12)
+
+        ->withQueryString();
+
+
+    return view(
+        'public.published-books',
+        compact(
             'publishedBooks',
             'search'
-        ));
-    }
+        )
+    );
+}
 }

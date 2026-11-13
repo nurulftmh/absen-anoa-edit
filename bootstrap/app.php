@@ -4,15 +4,37 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
-return Application::configure(basePath: dirname(__DIR__))
+return Application::configure(
+    basePath: dirname(__DIR__)
+)
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+
+        /*
+        |--------------------------------------------------------------------------
+        | MIDTRANS WEBHOOK
+        |--------------------------------------------------------------------------
+        |
+        | Midtrans mengirim request langsung dari server mereka.
+        | Request ini tidak membawa CSRF token Laravel.
+        |
+        | Karena itu route webhook harus dikecualikan dari
+        | CSRF / request-forgery protection.
+        |
+        */
+        $middleware->preventRequestForgery(except: [
+            'midtrans/webhook',
+        ]);
+
     })
+
     ->withExceptions(function (Exceptions $exceptions): void {
         //
-    })->create();
+    })
+
+    ->create();

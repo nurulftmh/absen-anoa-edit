@@ -2,15 +2,33 @@
     <div class="p-6 max-w-7xl mx-auto">
 
         {{-- HEADER --}}
-        <div class="mb-6">
-            <h1 class="text-3xl font-bold text-green-950">
+        <div class="mb-8 bg-white/80 backdrop-blur rounded-3xl shadow-sm border border-green-100 p-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+        <div>
+            <div class="inline-flex items-center gap-2 bg-orange-100 text-orange-700 px-4 py-1.5 rounded-full text-sm font-semibold mb-3">
+                📚 Manajemen Buku
+            </div>
+
+            <h1 class="text-3xl md:text-4xl font-extrabold text-green-950 tracking-tight">
                 Manajemen Buku
             </h1>
 
-            <p class="text-gray-500 mt-1">
-                Input dan kelola data buku dengan tampilan yang lebih rapi dan modern.
+            <p class="text-gray-500 mt-2 max-w-2xl">
+                Input, pantau, dan kelola data buku yang Anda tambahkan secara lebih rapi.
             </p>
         </div>
+
+        <div class="bg-green-950 text-white rounded-2xl px-6 py-4 shadow-md min-w-[110px]">
+            <p class="text-sm text-green-100">
+                Total Data
+            </p>
+
+            <p class="text-3xl font-bold">
+                {{ $books->total() }}
+            </p>
+        </div>
+    </div>
+</div>
 
         {{-- ALERT --}}
         @if(session('success'))
@@ -136,70 +154,96 @@
             </form>
         </div>
 
-        {{-- SEARCH --}}
-        <div class="mb-5">
-            <form action="{{ route('books.index') }}" method="GET">
+       {{-- SEARCH --}}
+<div class="mb-5">
+    <form action="{{ route('books.index') }}" method="GET">
 
-                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-5">
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-5">
 
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
 
-                        <div class="md:col-span-2">
-                            <label class="block mb-1.5 font-semibold text-xs text-gray-600">
-                                Kata Kunci
-                            </label>
+                <div class="md:col-span-2">
+                    <label class="block mb-1.5 font-semibold text-xs text-gray-600">
+                        Kata Kunci
+                    </label>
 
-                            <input type="text"
-                                   name="search"
-                                   value="{{ request('search') }}"
-                                   placeholder="Cari penulis, judul, status, atau catatan..."
-                                   class="w-full rounded-2xl border-gray-200 shadow-sm focus:border-green-700 focus:ring-green-700">
-                        </div>
-
-                        <div>
-                            <label class="block mb-1.5 font-semibold text-xs text-gray-600">
-                                Dari Tanggal
-                            </label>
-
-                            <input type="date"
-                                   name="date_from"
-                                   value="{{ request('date_from') }}"
-                                   class="w-full rounded-2xl border-gray-200 shadow-sm focus:border-green-700 focus:ring-green-700">
-                        </div>
-
-                        <div>
-                            <label class="block mb-1.5 font-semibold text-xs text-gray-600">
-                                Sampai Tanggal
-                            </label>
-
-                            <input type="date"
-                                   name="date_to"
-                                   value="{{ request('date_to') }}"
-                                   class="w-full rounded-2xl border-gray-200 shadow-sm focus:border-green-700 focus:ring-green-700">
-                        </div>
-
-                    </div>
-
-                    <div class="flex flex-col md:flex-row gap-3 mt-4 justify-end">
-
-                        <button class="bg-green-800 hover:bg-green-900 text-white px-6 py-3 rounded-2xl font-semibold shadow-sm">
-                            Cari Data
-                        </button>
-
-                        @if(request('search') || request('date_from') || request('date_to'))
-                            <a href="{{ route('books.index') }}"
-                               class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-2xl font-semibold text-center">
-                                Reset
-                            </a>
-                        @endif
-
-                    </div>
-
+                    <input type="text"
+                           name="search"
+                           value="{{ request('search') }}"
+                           placeholder="Cari penulis, judul, atau catatan..."
+                           class="w-full rounded-2xl border-gray-200 shadow-sm focus:border-green-700 focus:ring-green-700">
                 </div>
 
-            </form>
+                <div>
+                    <label class="block mb-1.5 font-semibold text-xs text-gray-600">
+                        Status
+                    </label>
+
+                    <select name="status"
+                            class="w-full rounded-2xl border-gray-200 shadow-sm focus:border-green-700 focus:ring-green-700">
+                        <option value="">Semua Status</option>
+
+                        <option value="On Progress" {{ request('status') === 'On Progress' ? 'selected' : '' }}>
+                            On Progress
+                        </option>
+
+                        <option value="Draft" {{ request('status') === 'Draft' ? 'selected' : '' }}>
+                            Draft
+                        </option>
+
+                        <option value="Pending" {{ request('status') === 'Pending' ? 'selected' : '' }}>
+                            Pending
+                        </option>
+
+                        <option value="Selesai" {{ request('status') === 'Selesai' ? 'selected' : '' }}>
+                            Selesai
+                        </option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block mb-1.5 font-semibold text-xs text-gray-600">
+                        Dari Tanggal
+                    </label>
+
+                    <input type="date"
+                           name="date_from"
+                           value="{{ request('date_from') }}"
+                           class="w-full rounded-2xl border-gray-200 shadow-sm focus:border-green-700 focus:ring-green-700">
+                </div>
+
+                <div>
+                    <label class="block mb-1.5 font-semibold text-xs text-gray-600">
+                        Sampai Tanggal
+                    </label>
+
+                    <input type="date"
+                           name="date_to"
+                           value="{{ request('date_to') }}"
+                           class="w-full rounded-2xl border-gray-200 shadow-sm focus:border-green-700 focus:ring-green-700">
+                </div>
+
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-3 mt-4 justify-end">
+
+                <button class="bg-green-800 hover:bg-green-900 text-white px-6 py-3 rounded-2xl font-semibold shadow-sm">
+                    Cari Data
+                </button>
+
+                @if(request('search') || request('status') || request('date_from') || request('date_to'))
+                    <a href="{{ route('books.index') }}"
+                       class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-2xl font-semibold text-center">
+                        Reset
+                    </a>
+                @endif
+
+            </div>
+
         </div>
 
+    </form>
+</div>
         {{-- TABLE --}}
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
 

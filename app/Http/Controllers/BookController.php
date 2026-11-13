@@ -10,10 +10,12 @@ class BookController extends Controller
     public function index(Request $request)
     {
         $search = $request->search;
+        $status = $request->status;
         $dateFrom = $request->date_from;
         $dateTo = $request->date_to;
 
         $books = Book::with('user')
+            ->where('user_id', auth()->id())
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('author_name', 'like', '%' . $search . '%')
@@ -21,6 +23,9 @@ class BookController extends Controller
                         ->orWhere('status', 'like', '%' . $search . '%')
                         ->orWhere('note', 'like', '%' . $search . '%');
                 });
+            })
+            ->when($status, function ($query) use ($status) {
+                $query->where('status', $status);
             })
             ->when($dateFrom && $dateTo, function ($query) use ($dateFrom, $dateTo) {
                 $query->whereBetween('entry_date', [$dateFrom, $dateTo]);
@@ -35,12 +40,19 @@ class BookController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('books.index', compact('books', 'search', 'dateFrom', 'dateTo'));
+        return view('books.index', compact(
+            'books',
+            'search',
+            'status',
+            'dateFrom',
+            'dateTo'
+        ));
     }
 
     public function adminIndex(Request $request)
     {
         $search = $request->search;
+        $status = $request->status;
         $dateFrom = $request->date_from;
         $dateTo = $request->date_to;
 
@@ -57,6 +69,9 @@ class BookController extends Controller
                         });
                 });
             })
+            ->when($status, function ($query) use ($status) {
+                $query->where('status', $status);
+            })
             ->when($dateFrom && $dateTo, function ($query) use ($dateFrom, $dateTo) {
                 $query->whereBetween('entry_date', [$dateFrom, $dateTo]);
             })
@@ -70,14 +85,20 @@ class BookController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('admin.books.index', compact('books', 'search', 'dateFrom', 'dateTo'));
+        return view('admin.books.index', compact(
+            'books',
+            'search',
+            'status',
+            'dateFrom',
+            'dateTo'
+        ));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'entry_date' => 'required|date',
-            'author_name' => 'required|string|max:255',
+            'author_name' => 'required|string',
             'title' => 'required|string',
             'docs_link' => 'nullable|url',
             'status' => 'required|string|max:255',
@@ -101,14 +122,20 @@ class BookController extends Controller
     {
         $request->validate([
             'entry_date' => 'required|date',
-            'author_name' => 'required|string|max:255',
+            'author_name' => 'required|string',
             'title' => 'required|string',
             'docs_link' => 'nullable|url',
             'status' => 'required|string|max:255',
             'note' => 'nullable|string',
         ]);
 
-        $book = Book::findOrFail($id);
+        $bookQuery = Book::query();
+
+        if (auth()->user()->role !== 'admin') {
+            $bookQuery->where('user_id', auth()->id());
+        }
+
+        $book = $bookQuery->findOrFail($id);
 
         $book->update([
             'entry_date' => $request->entry_date,
@@ -124,7 +151,13 @@ class BookController extends Controller
 
     public function destroy($id)
     {
-        $book = Book::findOrFail($id);
+        $bookQuery = Book::query();
+
+        if (auth()->user()->role !== 'admin') {
+            $bookQuery->where('user_id', auth()->id());
+        }
+
+        $book = $bookQuery->findOrFail($id);
 
         $book->delete();
 

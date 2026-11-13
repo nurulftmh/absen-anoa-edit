@@ -44,6 +44,7 @@
 
             </div>
 
+
             <div>
 
                 <h1 class="text-white font-extrabold">
@@ -59,7 +60,7 @@
         </a>
 
 
-         {{-- NAVIGATION --}}
+        {{-- NAVIGATION --}}
         <nav class="hidden md:flex items-center gap-6 text-sm font-semibold">
 
             <a
@@ -103,7 +104,6 @@
 
         </nav>
 
-
     </div>
 
 </header>
@@ -128,6 +128,7 @@
 
         </p>
 
+
         <h2 class="text-4xl md:text-5xl
                    font-extrabold
                    text-white
@@ -136,6 +137,7 @@
             Buku yang Telah Diterbitkan
 
         </h2>
+
 
         <p class="text-green-100 mt-4 max-w-2xl">
 
@@ -235,6 +237,7 @@
 
             </h3>
 
+
             @if($search)
 
                 <p class="text-gray-500 text-sm mt-1">
@@ -281,8 +284,11 @@
                        border border-gray-100
                        shadow-sm
                        hover:shadow-xl
-                       transition"
+                       transition
+                       flex
+                       flex-col"
             >
+
 
                 {{-- COVER --}}
                 <div class="aspect-[3/4]
@@ -331,7 +337,10 @@
                 </div>
 
 
-                <div class="p-5">
+
+                {{-- CONTENT --}}
+                <div class="p-5 flex flex-col flex-1">
+
 
                     {{-- TITLE --}}
                     <h3
@@ -355,6 +364,7 @@
                         {{ $book->author_name }}
 
                     </p>
+
 
 
                     {{-- INFO --}}
@@ -382,6 +392,7 @@
                         @endif
 
 
+
                         @if($book->publisher)
 
                             <div>
@@ -399,6 +410,7 @@
                         @endif
 
 
+
                         @if($book->published_date)
 
                             <div class="text-gray-500">
@@ -411,6 +423,126 @@
                         @endif
 
                     </div>
+
+
+
+                    {{-- ================================================= --}}
+                    {{-- PENJUALAN E-BOOK --}}
+                    {{-- ================================================= --}}
+                    @if(
+                        $book->is_for_sale
+                        && $book->price !== null
+                        && !empty($book->ebook_path)
+                    )
+
+                        <div class="mt-auto pt-5">
+
+                            <div class="border-t border-gray-100 pt-4">
+
+                                <div class="flex items-center justify-between gap-3">
+
+                                    <div>
+
+                                        <p class="text-xs
+                                                  uppercase
+                                                  tracking-wide
+                                                  font-bold
+                                                  text-gray-400">
+
+                                            Harga E-Book
+
+                                        </p>
+
+
+                                        <p class="text-2xl
+                                                  font-extrabold
+                                                  text-green-900
+                                                  mt-1">
+
+                                            Rp {{
+                                                number_format(
+                                                    (float) $book->price,
+                                                    0,
+                                                    ',',
+                                                    '.'
+                                                )
+                                            }}
+
+                                        </p>
+
+                                    </div>
+
+
+                                    <span class="inline-flex
+                                                 bg-green-100
+                                                 text-green-700
+                                                 text-xs
+                                                 font-bold
+                                                 px-3
+                                                 py-1
+                                                 rounded-full">
+
+                                        Tersedia
+
+                                    </span>
+
+                                </div>
+
+
+                                <a
+                                    href="{{ route('ebook.checkout', $book) }}"
+                                    class="mt-4
+                                           inline-flex
+                                           w-full
+                                           items-center
+                                           justify-center
+                                           gap-2
+                                           bg-green-800
+                                           hover:bg-green-900
+                                           text-white
+                                           font-bold
+                                           px-5
+                                           py-3
+                                           rounded-2xl
+                                           shadow-sm
+                                           transition"
+                                >
+
+                                    🛒 Beli E-Book
+
+                                </a>
+
+                            </div>
+
+                        </div>
+
+
+                    @elseif($book->is_for_sale)
+
+                        {{-- JIKA STATUS DIJUAL TAPI DATA BELUM LENGKAP --}}
+                        <div class="mt-auto pt-5">
+
+                            <div class="border-t border-gray-100 pt-4">
+
+                                <span class="inline-flex
+                                             bg-orange-100
+                                             text-orange-700
+                                             text-xs
+                                             font-semibold
+                                             px-3
+                                             py-2
+                                             rounded-xl">
+
+                                    E-Book belum tersedia untuk dibeli
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    @endif
+
 
                 </div>
 
@@ -433,6 +565,7 @@
                         📚
                     </div>
 
+
                     <h3 class="font-bold
                                text-xl
                                text-green-950">
@@ -440,6 +573,7 @@
                         Buku terbit tidak ditemukan
 
                     </h3>
+
 
                     <p class="text-gray-500 mt-2">
 
@@ -478,6 +612,7 @@
         <p class="font-bold">
             PT ANOA Sejahtera Mandiri
         </p>
+
 
         <p class="text-green-100 text-sm mt-2">
 

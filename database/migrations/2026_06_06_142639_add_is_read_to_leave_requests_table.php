@@ -8,15 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('leave_requests', function (Blueprint $table) {
-            $table->boolean('is_read')->default(false)->after('status');
-        });
+        if (! Schema::hasColumn('leave_requests', 'is_read')) {
+            Schema::table('leave_requests', function (Blueprint $table) {
+                $table->boolean('is_read')
+                    ->default(false)
+                    ->after('status');
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('leave_requests', function (Blueprint $table) {
-            $table->dropColumn('is_read');
-        });
+        if (Schema::hasColumn('leave_requests', 'is_read')) {
+            Schema::table('leave_requests', function (Blueprint $table) {
+                $table->dropColumn('is_read');
+            });
+        }
     }
 };
