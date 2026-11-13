@@ -10,6 +10,7 @@ use App\Http\Controllers\BookController;
 use App\Http\Controllers\PublishedBookController;
 use App\Http\Controllers\PublicBookController;
 use App\Http\Controllers\EbookCheckoutController;
+use App\Http\Controllers\AdminEbookOrderController;
 
 use App\Models\Attendance;
 use App\Models\WorkProgress;
@@ -359,6 +360,22 @@ Route::middleware([
     'auth'
 ])->group(function () {
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | ADMIN PENJUALAN E-BOOK
+    |--------------------------------------------------------------------------
+    */
+    Route::get(
+        '/admin/ebook-orders',
+        [
+            AdminEbookOrderController::class,
+            'index'
+        ]
+    )
+    ->name(
+        'admin.ebook-orders.index'
+    );
 
     /*
     |--------------------------------------------------------------------------

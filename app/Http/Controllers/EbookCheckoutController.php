@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\DB;
 use App\Models\EbookOrder;
 use App\Models\PublishedBook;
 use Illuminate\Http\Request;
@@ -33,6 +34,7 @@ class EbookCheckoutController extends Controller
         Config::$is3ds = true;
     }
 
+
     /*
     |--------------------------------------------------------------------------
     | HALAMAN CHECKOUT
@@ -43,7 +45,7 @@ class EbookCheckoutController extends Controller
         abort_unless(
             $publishedBook->is_for_sale
             && $publishedBook->price !== null
-            && !empty($publishedBook->ebook_path),
+            && ! empty($publishedBook->ebook_path),
             404
         );
 
@@ -52,6 +54,7 @@ class EbookCheckoutController extends Controller
             compact('publishedBook')
         );
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -65,10 +68,16 @@ class EbookCheckoutController extends Controller
         abort_unless(
             $publishedBook->is_for_sale
             && $publishedBook->price !== null
-            && !empty($publishedBook->ebook_path),
+            && ! empty($publishedBook->ebook_path),
             404
         );
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | VALIDASI PEMBELI
+        |--------------------------------------------------------------------------
+        */
         $validated = $request->validate([
             'buyer_name' => [
                 'required',
@@ -89,46 +98,68 @@ class EbookCheckoutController extends Controller
             ],
         ]);
 
+
         /*
         |--------------------------------------------------------------------------
         | BUAT ORDER LOKAL
         |--------------------------------------------------------------------------
         */
         $order = EbookOrder::create([
+
             'order_number' =>
                 'EBOOK-' .
                 now()->format('YmdHis') .
                 '-' .
-                strtoupper(Str::random(5)),
+                strtoupper(
+                    Str::random(5)
+                ),
+
 
             /*
-            | Token public untuk membuka halaman order.
-            | Jangan gunakan ID database pada URL publik.
+            |--------------------------------------------------------------------------
+            | TOKEN PUBLIC
+            |--------------------------------------------------------------------------
+            |
+            | Digunakan agar ID database tidak terekspos di URL.
+            |
             */
             'public_token' =>
                 Str::random(64),
 
+
             'published_book_id' =>
                 $publishedBook->id,
+
 
             'buyer_name' =>
                 $validated['buyer_name'],
 
+
             'buyer_email' =>
                 $validated['buyer_email'],
+
 
             'buyer_phone' =>
                 $validated['buyer_phone'],
 
+
             /*
-            | Harga wajib berasal dari database.
+            |--------------------------------------------------------------------------
+            | HARGA DARI DATABASE
+            |--------------------------------------------------------------------------
+            |
+            | Jangan pernah menggunakan harga dari request pembeli.
+            |
             */
             'amount' =>
                 $publishedBook->price,
 
+
             'payment_status' =>
                 'pending',
+
         ]);
+
 
         /*
         |--------------------------------------------------------------------------
@@ -136,19 +167,30 @@ class EbookCheckoutController extends Controller
         |--------------------------------------------------------------------------
         */
         try {
+
             $snapToken =
-                $this->createSnapToken($order);
+                $this->createSnapToken(
+                    $order
+                );
+
 
             $order->update([
-                'snap_token' => $snapToken,
+                'snap_token' =>
+                    $snapToken,
             ]);
+
         } catch (Throwable $e) {
+
             /*
-            | Jangan tinggalkan order gagal sebagai pending.
+            |--------------------------------------------------------------------------
+            | HAPUS ORDER JIKA MIDTRANS GAGAL
+            |--------------------------------------------------------------------------
             */
             $order->delete();
 
+
             report($e);
+
 
             return back()
                 ->withInput()
@@ -158,9 +200,10 @@ class EbookCheckoutController extends Controller
                 ]);
         }
 
+
         /*
         |--------------------------------------------------------------------------
-        | REDIRECT KE URL ORDER YANG AMAN
+        | REDIRECT KE ORDER
         |--------------------------------------------------------------------------
         */
         return redirect()
@@ -177,6 +220,7 @@ class EbookCheckoutController extends Controller
             );
     }
 
+
     /*
     |--------------------------------------------------------------------------
     | DETAIL ORDER
@@ -188,30 +232,41 @@ class EbookCheckoutController extends Controller
             'public_token',
             $token
         )
-            ->with('publishedBook')
+            ->with(
+                'publishedBook'
+            )
             ->firstOrFail();
+
 
         /*
         |--------------------------------------------------------------------------
-        | ORDER LAMA YANG BELUM PUNYA SNAP TOKEN
+        | ORDER PENDING YANG BELUM MEMILIKI SNAP TOKEN
         |--------------------------------------------------------------------------
         */
         if (
             $order->payment_status === 'pending'
             && empty($order->snap_token)
         ) {
+
             try {
+
                 $snapToken =
-                    $this->createSnapToken($order);
+                    $this->createSnapToken(
+                        $order
+                    );
+
 
                 $order->update([
                     'snap_token' =>
                         $snapToken,
                 ]);
+
             } catch (Throwable $e) {
+
                 report($e);
             }
         }
+
 
         return view(
             'public.ebook-order',
@@ -219,109 +274,157 @@ class EbookCheckoutController extends Controller
         );
     }
 
+
     /*
     |--------------------------------------------------------------------------
     | DOWNLOAD E-BOOK
     |--------------------------------------------------------------------------
     |
-    | File hanya boleh diberikan jika order sudah PAID.
-    | File tetap berada di storage private.
+    | Syarat:
+    |
+    | - token order valid
+    | - transaksi sudah PAID
+    | - buku tersedia
+    | - ebook_path tersedia
+    | - file benar-benar ada di private storage
     |
     */
     public function download(string $token)
-    {
-        $order = EbookOrder::where(
-            'public_token',
-            $token
+{
+    $order = EbookOrder::where(
+        'public_token',
+        $token
+    )
+        ->with('publishedBook')
+        ->firstOrFail();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | HANYA ORDER PAID
+    |--------------------------------------------------------------------------
+    */
+    abort_unless(
+        $order->payment_status === 'paid',
+        403,
+        'Pembayaran belum terverifikasi.'
+    );
+
+
+    $book = $order->publishedBook;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CEK DATA BUKU
+    |--------------------------------------------------------------------------
+    */
+    abort_unless(
+        $book,
+        404,
+        'Data buku tidak ditemukan.'
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CEK PATH E-BOOK
+    |--------------------------------------------------------------------------
+    */
+    abort_if(
+        empty($book->ebook_path),
+        404,
+        'File e-book tidak tersedia.'
+    );
+
+
+    $disk = Storage::disk('local');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CEK FILE FISIK
+    |--------------------------------------------------------------------------
+    */
+    abort_unless(
+        $disk->exists($book->ebook_path),
+        404,
+        'File e-book tidak ditemukan.'
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TRACK DOWNLOAD
+    |--------------------------------------------------------------------------
+    |
+    | Browser dapat membuat beberapa request untuk satu download.
+    | Karena itu, request dalam rentang 30 detik hanya dihitung 1 kali.
+    |
+    */
+    $now = now();
+
+    $cutoff = $now
+        ->copy()
+        ->subSeconds(30);
+
+
+    EbookOrder::whereKey($order->id)
+
+        ->where(function ($query) use ($cutoff) {
+
+            $query
+                ->whereNull('last_downloaded_at')
+
+                ->orWhere(
+                    'last_downloaded_at',
+                    '<=',
+                    $cutoff
+                );
+
+        })
+
+        ->update([
+
+            'download_count' =>
+                DB::raw('download_count + 1'),
+
+            'last_downloaded_at' =>
+                $now,
+
+        ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | NAMA FILE
+    |--------------------------------------------------------------------------
+    */
+    $fileName =
+        (
+            Str::slug($book->title)
+            ?: 'ebook-' . $book->id
         )
-            ->with('publishedBook')
-            ->firstOrFail();
+        . '.pdf';
 
-        /*
-        |--------------------------------------------------------------------------
-        | WAJIB SUDAH DIBAYAR
-        |--------------------------------------------------------------------------
-        */
-        abort_unless(
-            $order->payment_status === 'paid',
-            403,
-            'Pembayaran belum terverifikasi.'
-        );
 
-        $book = $order->publishedBook;
+    /*
+    |--------------------------------------------------------------------------
+    | DOWNLOAD
+    |--------------------------------------------------------------------------
+    */
+    return $disk->download(
+        $book->ebook_path,
+        $fileName,
+        [
+            'Content-Type' =>
+                'application/pdf',
 
-        /*
-        |--------------------------------------------------------------------------
-        | PASTIKAN BUKU ADA
-        |--------------------------------------------------------------------------
-        */
-        abort_unless(
-            $book,
-            404,
-            'Data buku tidak ditemukan.'
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | PASTIKAN PATH E-BOOK ADA
-        |--------------------------------------------------------------------------
-        */
-        abort_if(
-            empty($book->ebook_path),
-            404,
-            'File e-book tidak tersedia.'
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | STORAGE PRIVATE
-        |--------------------------------------------------------------------------
-        */
-        $disk = Storage::disk('local');
-
-        /*
-        |--------------------------------------------------------------------------
-        | PASTIKAN FILE BENAR-BENAR ADA
-        |--------------------------------------------------------------------------
-        */
-        abort_unless(
-            $disk->exists(
-                $book->ebook_path
-            ),
-            404,
-            'File e-book tidak ditemukan.'
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | NAMA FILE DOWNLOAD
-        |--------------------------------------------------------------------------
-        */
-        $fileName =
-            (
-                Str::slug($book->title)
-                ?: 'ebook-' . $book->id
-            )
-            . '.pdf';
-
-        /*
-        |--------------------------------------------------------------------------
-        | DOWNLOAD
-        |--------------------------------------------------------------------------
-        */
-        return $disk->download(
-            $book->ebook_path,
-            $fileName,
-            [
-                'Content-Type' =>
-                    'application/pdf',
-
-                'Cache-Control' =>
-                    'private, no-store, max-age=0',
-            ]
-        );
-    }
-
+            'Cache-Control' =>
+                'private, no-store, max-age=0',
+        ]
+    );
+}
     /*
     |--------------------------------------------------------------------------
     | GENERATE SNAP TOKEN
@@ -330,50 +433,82 @@ class EbookCheckoutController extends Controller
     private function createSnapToken(
         EbookOrder $order
     ): string {
+        /*
+        |--------------------------------------------------------------------------
+        | KONFIGURASI MIDTRANS
+        |--------------------------------------------------------------------------
+        */
         $this->configureMidtrans();
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | PASTIKAN RELASI BUKU TERLOAD
+        |--------------------------------------------------------------------------
+        */
         $order->loadMissing(
             'publishedBook'
         );
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | PARAMETER MIDTRANS
+        |--------------------------------------------------------------------------
+        */
         $params = [
+
+
             /*
             |--------------------------------------------------------------------------
             | TRANSAKSI
             |--------------------------------------------------------------------------
             */
             'transaction_details' => [
+
                 'order_id' =>
                     $order->order_number,
 
                 'gross_amount' =>
                     (int) $order->amount,
+
             ],
+
 
             /*
             |--------------------------------------------------------------------------
-            | PRODUK
+            | DETAIL PRODUK
             |--------------------------------------------------------------------------
             */
             'item_details' => [
                 [
+
                     'id' =>
-                        (string) $order->published_book_id,
+                        (string)
+                        $order->published_book_id,
+
 
                     'price' =>
-                        (int) $order->amount,
+                        (int)
+                        $order->amount,
+
 
                     'quantity' =>
                         1,
 
+
                     'name' =>
                         Str::limit(
-                            $order->publishedBook->title,
+                            $order
+                                ->publishedBook
+                                ->title,
                             45,
                             ''
                         ),
+
                 ],
             ],
+
 
             /*
             |--------------------------------------------------------------------------
@@ -381,28 +516,40 @@ class EbookCheckoutController extends Controller
             |--------------------------------------------------------------------------
             */
             'customer_details' => [
+
                 'first_name' =>
                     $order->buyer_name,
+
 
                 'email' =>
                     $order->buyer_email,
 
+
                 'phone' =>
                     $order->buyer_phone,
+
             ],
+
         ];
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | SNAP TOKEN
+        |--------------------------------------------------------------------------
+        */
         return Snap::getSnapToken(
             $params
         );
     }
+
 
     /*
     |--------------------------------------------------------------------------
     | VERIFIKASI SIGNATURE WEBHOOK
     |--------------------------------------------------------------------------
     |
-    | Mencoba:
+    | Sistem mencoba:
     |
     | 1. Signature Secret Key
     | 2. Server Key sebagai fallback
@@ -414,19 +561,32 @@ class EbookCheckoutController extends Controller
         string $grossAmount,
         string $receivedSignature
     ): bool {
+
+        /*
+        |--------------------------------------------------------------------------
+        | SIGNATURE SECRET
+        |--------------------------------------------------------------------------
+        */
         $signatureSecret =
             (string) config(
                 'services.midtrans.signature_secret'
             );
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | SERVER KEY
+        |--------------------------------------------------------------------------
+        */
         $serverKey =
             (string) config(
                 'services.midtrans.server_key'
             );
 
+
         /*
         |--------------------------------------------------------------------------
-        | DAFTAR KEY YANG BOLEH DIPAKAI
+        | DAFTAR KEY
         |--------------------------------------------------------------------------
         */
         $keys = array_unique(
@@ -436,7 +596,14 @@ class EbookCheckoutController extends Controller
             ])
         );
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | COBA VERIFIKASI
+        |--------------------------------------------------------------------------
+        */
         foreach ($keys as $key) {
+
             $expectedSignature = hash(
                 'sha512',
                 $orderId .
@@ -445,18 +612,22 @@ class EbookCheckoutController extends Controller
                 $key
             );
 
+
             if (
                 hash_equals(
                     $expectedSignature,
                     $receivedSignature
                 )
             ) {
+
                 return true;
             }
         }
 
+
         return false;
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -476,20 +647,24 @@ class EbookCheckoutController extends Controller
                 'order_id'
             );
 
+
         $statusCode =
             (string) $request->input(
                 'status_code'
             );
+
 
         $grossAmount =
             (string) $request->input(
                 'gross_amount'
             );
 
+
         $signatureKey =
             (string) $request->input(
                 'signature_key'
             );
+
 
         /*
         |--------------------------------------------------------------------------
@@ -502,11 +677,13 @@ class EbookCheckoutController extends Controller
             || empty($grossAmount)
             || empty($signatureKey)
         ) {
+
             return response()->json([
                 'message' =>
                     'Invalid notification payload.',
             ], 400);
         }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -514,18 +691,20 @@ class EbookCheckoutController extends Controller
         |--------------------------------------------------------------------------
         */
         if (
-            !$this->isValidWebhookSignature(
+            ! $this->isValidWebhookSignature(
                 $orderId,
                 $statusCode,
                 $grossAmount,
                 $signatureKey
             )
         ) {
+
             return response()->json([
                 'message' =>
                     'Invalid signature.',
             ], 403);
         }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -537,16 +716,19 @@ class EbookCheckoutController extends Controller
             $orderId
         )->first();
 
-        if (!$order) {
+
+        if (! $order) {
+
             return response()->json([
                 'message' =>
                     'Order not found.',
             ], 404);
         }
 
+
         /*
         |--------------------------------------------------------------------------
-        | VERIFIKASI NOMINAL
+        | VERIFIKASI NOMINAL TRANSAKSI
         |--------------------------------------------------------------------------
         */
         $localAmount = number_format(
@@ -556,6 +738,7 @@ class EbookCheckoutController extends Controller
             ''
         );
 
+
         $midtransAmount = number_format(
             (float) $grossAmount,
             2,
@@ -563,19 +746,23 @@ class EbookCheckoutController extends Controller
             ''
         );
 
+
         if (
             $localAmount
-            !== $midtransAmount
+            !==
+            $midtransAmount
         ) {
+
             return response()->json([
                 'message' =>
                     'Invalid transaction amount.',
             ], 422);
         }
 
+
         /*
         |--------------------------------------------------------------------------
-        | DATA STATUS MIDTRANS
+        | STATUS MIDTRANS
         |--------------------------------------------------------------------------
         */
         $transactionStatus =
@@ -585,6 +772,12 @@ class EbookCheckoutController extends Controller
                 )
             );
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | FRAUD STATUS
+        |--------------------------------------------------------------------------
+        */
         $fraudStatus =
             strtolower(
                 (string) $request->input(
@@ -593,15 +786,28 @@ class EbookCheckoutController extends Controller
                 )
             );
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | TRANSACTION ID
+        |--------------------------------------------------------------------------
+        */
         $transactionId =
             $request->input(
                 'transaction_id'
             );
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | PAYMENT TYPE
+        |--------------------------------------------------------------------------
+        */
         $paymentType =
             $request->input(
                 'payment_type'
             );
+
 
         /*
         |--------------------------------------------------------------------------
@@ -609,12 +815,16 @@ class EbookCheckoutController extends Controller
         |--------------------------------------------------------------------------
         */
         $updates = [
+
             'midtrans_transaction_id' =>
                 $transactionId,
 
+
             'payment_type' =>
                 $paymentType,
+
         ];
+
 
         /*
         |--------------------------------------------------------------------------
@@ -622,25 +832,28 @@ class EbookCheckoutController extends Controller
         |--------------------------------------------------------------------------
         */
         if (
-            $transactionStatus
-                === 'settlement'
+            $transactionStatus === 'settlement'
             && $statusCode === '200'
             && (
                 empty($fraudStatus)
                 || $fraudStatus === 'accept'
             )
         ) {
+
             $updates['payment_status'] =
                 'paid';
 
+
             /*
-            | Jangan ubah paid_at apabila
-            | webhook dikirim ulang.
+            |--------------------------------------------------------------------------
+            | JANGAN TIMPA paid_at SAAT WEBHOOK DIKIRIM ULANG
+            |--------------------------------------------------------------------------
             */
             $updates['paid_at'] =
                 $order->paid_at
                 ?? now();
         }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -648,21 +861,23 @@ class EbookCheckoutController extends Controller
         |--------------------------------------------------------------------------
         */
         elseif (
-            $transactionStatus
-                === 'capture'
+            $transactionStatus === 'capture'
             && $statusCode === '200'
             && (
                 empty($fraudStatus)
                 || $fraudStatus === 'accept'
             )
         ) {
+
             $updates['payment_status'] =
                 'paid';
+
 
             $updates['paid_at'] =
                 $order->paid_at
                 ?? now();
         }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -670,21 +885,24 @@ class EbookCheckoutController extends Controller
         |--------------------------------------------------------------------------
         */
         elseif (
-            $transactionStatus
-                === 'pending'
+            $transactionStatus === 'pending'
         ) {
+
             /*
-            | Order PAID tidak boleh turun
-            | lagi menjadi PENDING.
+            |--------------------------------------------------------------------------
+            | PAID TIDAK BOLEH TURUN JADI PENDING
+            |--------------------------------------------------------------------------
             */
             if (
                 $order->payment_status
                 !== 'paid'
             ) {
+
                 $updates['payment_status'] =
                     'pending';
             }
         }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -692,17 +910,24 @@ class EbookCheckoutController extends Controller
         |--------------------------------------------------------------------------
         */
         elseif (
-            $transactionStatus
-                === 'expire'
+            $transactionStatus === 'expire'
         ) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | PAID TIDAK BOLEH TURUN JADI EXPIRED
+            |--------------------------------------------------------------------------
+            */
             if (
                 $order->payment_status
                 !== 'paid'
             ) {
+
                 $updates['payment_status'] =
                     'expired';
             }
         }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -710,17 +935,24 @@ class EbookCheckoutController extends Controller
         |--------------------------------------------------------------------------
         */
         elseif (
-            $transactionStatus
-                === 'cancel'
+            $transactionStatus === 'cancel'
         ) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | PAID TIDAK BOLEH TURUN JADI CANCELLED
+            |--------------------------------------------------------------------------
+            */
             if (
                 $order->payment_status
                 !== 'paid'
             ) {
+
                 $updates['payment_status'] =
                     'cancelled';
             }
         }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -729,17 +961,25 @@ class EbookCheckoutController extends Controller
         */
         elseif (
             $transactionStatus === 'deny'
-            || $transactionStatus
-                === 'failure'
+            ||
+            $transactionStatus === 'failure'
         ) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | PAID TIDAK BOLEH TURUN JADI FAILED
+            |--------------------------------------------------------------------------
+            */
             if (
                 $order->payment_status
                 !== 'paid'
             ) {
+
                 $updates['payment_status'] =
                     'failed';
             }
         }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -747,28 +987,33 @@ class EbookCheckoutController extends Controller
         |--------------------------------------------------------------------------
         */
         elseif (
-            $transactionStatus
-                === 'refund'
-            || $transactionStatus
-                === 'partial_refund'
+            $transactionStatus === 'refund'
+            ||
+            $transactionStatus === 'partial_refund'
         ) {
+
             $updates['payment_status'] =
                 'refunded';
         }
 
+
         /*
         |--------------------------------------------------------------------------
-        | UPDATE DATABASE
+        | UPDATE ORDER
         |--------------------------------------------------------------------------
         */
         $order->update(
             $updates
         );
 
+
         /*
         |--------------------------------------------------------------------------
         | RESPONSE 200
         |--------------------------------------------------------------------------
+        |
+        | Midtrans membutuhkan HTTP 2xx agar webhook dianggap diterima.
+        |
         */
         return response()->json([
             'message' =>

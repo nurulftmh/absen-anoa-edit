@@ -20,6 +20,8 @@ class EbookOrder extends Model
         'payment_type',
         'midtrans_transaction_id',
         'paid_at',
+        'download_count',
+        'last_downloaded_at',
     ];
 
     protected function casts(): array
@@ -27,13 +29,13 @@ class EbookOrder extends Model
         return [
             'amount' => 'decimal:2',
             'paid_at' => 'datetime',
+            'download_count' => 'integer',
+            'last_downloaded_at' => 'datetime',
         ];
     }
 
     public function publishedBook(): BelongsTo
     {
-        return $this->belongsTo(
-            PublishedBook::class
-        );
+        return $this->belongsTo(PublishedBook::class);
     }
 }
