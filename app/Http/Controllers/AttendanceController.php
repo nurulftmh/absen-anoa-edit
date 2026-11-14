@@ -137,10 +137,10 @@ class AttendanceController extends Controller
         }
 
         $checkInTime = Carbon::parse($attendance->date . ' ' . $attendance->check_in);
-        $allowedCheckOut = $checkInTime->copy()->addHours(8);
+        $allowedCheckOut = $checkInTime->copy()->addHours(9);
 
         if (now()->lt($allowedCheckOut)) {
-            return back()->with('error', 'Belum bisa absen pulang. Minimal 8 jam kerja dari waktu absen masuk.');
+            return back()->with('error', 'Belum bisa absen pulang. Minimal 9 jam kerja dari waktu absen masuk.');
         }
 
         $attendance->update([
