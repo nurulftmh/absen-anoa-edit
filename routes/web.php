@@ -25,7 +25,9 @@ use Illuminate\Support\Facades\File;
 |--------------------------------------------------------------------------
 */
 Route::get('/', function () {
+
     return view('welcome');
+
 });
 
 
@@ -48,6 +50,11 @@ Route::get('/media/{path}', function ($path) {
     $path = ltrim($path, '/');
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | HAPUS PREFIX PUBLIC
+    |--------------------------------------------------------------------------
+    */
     if (str_starts_with($path, 'public/')) {
 
         $path = substr(
@@ -58,6 +65,11 @@ Route::get('/media/{path}', function ($path) {
     }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | HAPUS PREFIX STORAGE
+    |--------------------------------------------------------------------------
+    */
     if (str_starts_with($path, 'storage/')) {
 
         $path = substr(
@@ -80,11 +92,21 @@ Route::get('/media/{path}', function ($path) {
     }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | FULL PATH
+    |--------------------------------------------------------------------------
+    */
     $fullPath = storage_path(
         'app/public/' . $path
     );
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | FILE TIDAK ADA
+    |--------------------------------------------------------------------------
+    */
     if (! File::exists($fullPath)) {
 
         abort(404);
@@ -92,13 +114,60 @@ Route::get('/media/{path}', function ($path) {
     }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | TAMPILKAN FILE
+    |--------------------------------------------------------------------------
+    */
     return response()->file(
         $fullPath
     );
 
 })
-->where('path', '.*')
-->name('media.show');
+->where(
+    'path',
+    '.*'
+)
+->name(
+    'media.show'
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC LEGAL & CONTACT PAGES
+|--------------------------------------------------------------------------
+|
+| Halaman ini digunakan untuk memenuhi kebutuhan informasi publik
+| dan kriteria website pembayaran Midtrans.
+|
+*/
+
+Route::view(
+    '/syarat-ketentuan',
+    'public.terms'
+)
+->name(
+    'public.terms'
+);
+
+
+Route::view(
+    '/kebijakan-refund',
+    'public.refund-policy'
+)
+->name(
+    'public.refund-policy'
+);
+
+
+Route::view(
+    '/kontak',
+    'public.contact'
+)
+->name(
+    'public.contact'
+);
 
 
 /*
@@ -113,7 +182,9 @@ Route::get('/dashboard', function () {
     | ADMIN
     |--------------------------------------------------------------------------
     */
-    if (auth()->user()->role === 'admin') {
+    if (
+        auth()->user()->role === 'admin'
+    ) {
 
         return view(
             'admin.dashboard'
@@ -127,13 +198,20 @@ Route::get('/dashboard', function () {
     | USER
     |--------------------------------------------------------------------------
     */
-    $today = now()->toDateString();
+    $today =
+        now()->toDateString();
 
 
-    $attendance = Attendance::where(
-        'user_id',
-        auth()->id()
-    )
+    /*
+    |--------------------------------------------------------------------------
+    | ABSENSI HARI INI
+    |--------------------------------------------------------------------------
+    */
+    $attendance =
+        Attendance::where(
+            'user_id',
+            auth()->id()
+        )
         ->where(
             'date',
             $today
@@ -141,10 +219,16 @@ Route::get('/dashboard', function () {
         ->first();
 
 
-    $attendances = Attendance::where(
-        'user_id',
-        auth()->id()
-    )
+    /*
+    |--------------------------------------------------------------------------
+    | RIWAYAT ABSENSI
+    |--------------------------------------------------------------------------
+    */
+    $attendances =
+        Attendance::where(
+            'user_id',
+            auth()->id()
+        )
         ->orderBy(
             'date',
             'desc'
@@ -156,9 +240,15 @@ Route::get('/dashboard', function () {
         ->get();
 
 
-    $workProgresses = WorkProgress::with(
-        'files'
-    )
+    /*
+    |--------------------------------------------------------------------------
+    | PROGRES KERJA
+    |--------------------------------------------------------------------------
+    */
+    $workProgresses =
+        WorkProgress::with(
+            'files'
+        )
         ->whereHas(
             'attendance',
             function ($query) {
@@ -186,9 +276,11 @@ Route::get('/dashboard', function () {
 })
 ->middleware([
     'auth',
-    'verified'
+    'verified',
 ])
-->name('dashboard');
+->name(
+    'dashboard'
+);
 
 
 /*
@@ -204,10 +296,12 @@ Route::get(
     '/manuscript-published',
     [
         ManuscriptController::class,
-        'publicPublished'
+        'publicPublished',
     ]
 )
-->name('public.manuscripts');
+->name(
+    'public.manuscripts'
+);
 
 
 /*
@@ -219,20 +313,24 @@ Route::get(
     '/buku',
     [
         PublicBookController::class,
-        'books'
+        'books',
     ]
 )
-->name('public.books');
+->name(
+    'public.books'
+);
 
 
 Route::get(
     '/buku-terbit',
     [
         PublicBookController::class,
-        'publishedBooks'
+        'publishedBooks',
     ]
 )
-->name('public.published-books');
+->name(
+    'public.published-books'
+);
 
 
 /*
@@ -254,10 +352,12 @@ Route::get(
     '/ebook/{publishedBook}/checkout',
     [
         EbookCheckoutController::class,
-        'show'
+        'show',
     ]
 )
-->name('ebook.checkout');
+->name(
+    'ebook.checkout'
+);
 
 
 /*
@@ -269,10 +369,12 @@ Route::post(
     '/ebook/{publishedBook}/checkout',
     [
         EbookCheckoutController::class,
-        'store'
+        'store',
     ]
 )
-->name('ebook.checkout.store');
+->name(
+    'ebook.checkout.store'
+);
 
 
 /*
@@ -280,25 +382,27 @@ Route::post(
 | DETAIL ORDER DENGAN TOKEN AMAN
 |--------------------------------------------------------------------------
 |
-| Tidak lagi menggunakan ID seperti:
+| Tidak lagi menggunakan ID database.
 |
-| /ebook-order/4
+| Contoh:
 |
-| Sekarang menggunakan token acak 64 karakter.
+| /ebook-order/abcdefghijklmnopqrstuvwxyz123456...
 |
 */
 Route::get(
     '/ebook-order/{token}',
     [
         EbookCheckoutController::class,
-        'order'
+        'order',
     ]
 )
 ->where(
     'token',
     '[A-Za-z0-9]{64}'
 )
-->name('ebook.order.show');
+->name(
+    'ebook.order.show'
+);
 
 
 /*
@@ -306,10 +410,10 @@ Route::get(
 | DOWNLOAD E-BOOK
 |--------------------------------------------------------------------------
 |
-| Controller akan memastikan:
+| Controller memastikan:
 |
 | - token order valid
-| - order sudah PAID
+| - transaksi berstatus PAID
 | - file e-book tersedia
 |
 */
@@ -317,14 +421,16 @@ Route::get(
     '/ebook-order/{token}/download',
     [
         EbookCheckoutController::class,
-        'download'
+        'download',
     ]
 )
 ->where(
     'token',
     '[A-Za-z0-9]{64}'
 )
-->name('ebook.order.download');
+->name(
+    'ebook.order.download'
+);
 
 
 /*
@@ -332,20 +438,24 @@ Route::get(
 | MIDTRANS WEBHOOK
 |--------------------------------------------------------------------------
 |
-| Route ini dipanggil langsung oleh server Midtrans.
+| Route dipanggil langsung oleh server Midtrans.
 |
-| Jangan masukkan ke middleware auth.
-| Jangan gunakan CSRF pada route ini.
+| Jangan:
+|
+| - gunakan middleware auth
+| - gunakan CSRF
 |
 */
 Route::post(
     '/midtrans/webhook',
     [
         EbookCheckoutController::class,
-        'webhook'
+        'webhook',
     ]
 )
-->name('midtrans.webhook');
+->name(
+    'midtrans.webhook'
+);
 
 
 /*
@@ -357,7 +467,7 @@ Route::post(
 |
 */
 Route::middleware([
-    'auth'
+    'auth',
 ])->group(function () {
 
 
@@ -370,12 +480,13 @@ Route::middleware([
         '/admin/ebook-orders',
         [
             AdminEbookOrderController::class,
-            'index'
+            'index',
         ]
     )
     ->name(
         'admin.ebook-orders.index'
     );
+
 
     /*
     |--------------------------------------------------------------------------
@@ -386,7 +497,7 @@ Route::middleware([
         '/notifications/leave/read',
         [
             LeaveRequestController::class,
-            'markLeaveNotificationsAsRead'
+            'markLeaveNotificationsAsRead',
         ]
     )
     ->name(
@@ -403,7 +514,7 @@ Route::middleware([
         '/absen-masuk',
         [
             AttendanceController::class,
-            'checkIn'
+            'checkIn',
         ]
     )
     ->name(
@@ -415,7 +526,7 @@ Route::middleware([
         '/absen-pulang',
         [
             AttendanceController::class,
-            'checkOut'
+            'checkOut',
         ]
     )
     ->name(
@@ -432,7 +543,7 @@ Route::middleware([
         '/progres-kerja',
         [
             WorkProgressController::class,
-            'index'
+            'index',
         ]
     )
     ->name(
@@ -444,7 +555,7 @@ Route::middleware([
         '/progres-kerja',
         [
             WorkProgressController::class,
-            'store'
+            'store',
         ]
     )
     ->name(
@@ -456,7 +567,7 @@ Route::middleware([
         '/progres-kerja/{id}',
         [
             WorkProgressController::class,
-            'update'
+            'update',
         ]
     )
     ->name(
@@ -488,7 +599,7 @@ Route::middleware([
         '/books',
         [
             BookController::class,
-            'index'
+            'index',
         ]
     )
     ->name(
@@ -500,7 +611,7 @@ Route::middleware([
         '/books',
         [
             BookController::class,
-            'store'
+            'store',
         ]
     )
     ->name(
@@ -512,7 +623,7 @@ Route::middleware([
         '/books/{id}',
         [
             BookController::class,
-            'update'
+            'update',
         ]
     )
     ->name(
@@ -524,7 +635,7 @@ Route::middleware([
         '/books/{id}',
         [
             BookController::class,
-            'destroy'
+            'destroy',
         ]
     )
     ->name(
@@ -541,7 +652,7 @@ Route::middleware([
         '/published-books',
         [
             PublishedBookController::class,
-            'index'
+            'index',
         ]
     )
     ->name(
@@ -553,7 +664,7 @@ Route::middleware([
         '/published-books',
         [
             PublishedBookController::class,
-            'store'
+            'store',
         ]
     )
     ->name(
@@ -565,7 +676,7 @@ Route::middleware([
         '/published-books/{publishedBook}',
         [
             PublishedBookController::class,
-            'update'
+            'update',
         ]
     )
     ->name(
@@ -577,7 +688,7 @@ Route::middleware([
         '/published-books/{publishedBook}',
         [
             PublishedBookController::class,
-            'destroy'
+            'destroy',
         ]
     )
     ->name(
@@ -594,7 +705,7 @@ Route::middleware([
         '/manuscripts',
         [
             ManuscriptController::class,
-            'index'
+            'index',
         ]
     )
     ->name(
@@ -606,7 +717,7 @@ Route::middleware([
         '/manuscripts',
         [
             ManuscriptController::class,
-            'store'
+            'store',
         ]
     )
     ->name(
@@ -618,7 +729,7 @@ Route::middleware([
         '/manuscripts/{id}',
         [
             ManuscriptController::class,
-            'update'
+            'update',
         ]
     )
     ->name(
@@ -630,7 +741,7 @@ Route::middleware([
         '/manuscripts/{id}',
         [
             ManuscriptController::class,
-            'destroy'
+            'destroy',
         ]
     )
     ->name(
@@ -647,7 +758,7 @@ Route::middleware([
         '/izin',
         [
             LeaveRequestController::class,
-            'store'
+            'store',
         ]
     )
     ->name(
@@ -659,7 +770,7 @@ Route::middleware([
         '/admin/izin',
         [
             LeaveRequestController::class,
-            'adminIndex'
+            'adminIndex',
         ]
     )
     ->name(
@@ -671,7 +782,7 @@ Route::middleware([
         '/admin/izin/{id}/approve',
         [
             LeaveRequestController::class,
-            'approve'
+            'approve',
         ]
     )
     ->name(
@@ -683,7 +794,7 @@ Route::middleware([
         '/admin/izin/{id}/reject',
         [
             LeaveRequestController::class,
-            'reject'
+            'reject',
         ]
     )
     ->name(
@@ -700,7 +811,7 @@ Route::middleware([
         '/admin/absensi',
         [
             AttendanceController::class,
-            'adminAttendance'
+            'adminAttendance',
         ]
     )
     ->name(
@@ -712,7 +823,7 @@ Route::middleware([
         '/admin/riwayat-absen/{user}',
         [
             AttendanceController::class,
-            'employeeHistory'
+            'employeeHistory',
         ]
     )
     ->name(
@@ -729,7 +840,7 @@ Route::middleware([
         '/admin/progres',
         [
             AttendanceController::class,
-            'adminProgress'
+            'adminProgress',
         ]
     )
     ->name(
@@ -746,7 +857,7 @@ Route::middleware([
         '/admin/users',
         [
             AdminUserController::class,
-            'index'
+            'index',
         ]
     )
     ->name(
@@ -758,7 +869,7 @@ Route::middleware([
         '/admin/users/{user}/role',
         [
             AdminUserController::class,
-            'updateRole'
+            'updateRole',
         ]
     )
     ->name(
@@ -770,7 +881,7 @@ Route::middleware([
         '/admin/users/{user}',
         [
             AdminUserController::class,
-            'destroy'
+            'destroy',
         ]
     )
     ->name(
@@ -787,7 +898,7 @@ Route::middleware([
         '/admin/manuscripts',
         [
             ManuscriptController::class,
-            'adminIndex'
+            'adminIndex',
         ]
     )
     ->name(
@@ -804,7 +915,7 @@ Route::middleware([
         '/admin/books',
         [
             BookController::class,
-            'adminIndex'
+            'adminIndex',
         ]
     )
     ->name(
@@ -821,7 +932,7 @@ Route::middleware([
         '/admin/published-books',
         [
             PublishedBookController::class,
-            'adminIndex'
+            'adminIndex',
         ]
     )
     ->name(
@@ -845,7 +956,7 @@ Route::middleware(
         '/profile',
         [
             ProfileController::class,
-            'edit'
+            'edit',
         ]
     )
     ->name(
@@ -857,7 +968,7 @@ Route::middleware(
         '/profile',
         [
             ProfileController::class,
-            'update'
+            'update',
         ]
     )
     ->name(
@@ -869,7 +980,7 @@ Route::middleware(
         '/profile',
         [
             ProfileController::class,
-            'destroy'
+            'destroy',
         ]
     )
     ->name(

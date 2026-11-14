@@ -1005,6 +1005,6 @@
 
 @endif
 
-
+@include('public.partials.legal-footer')
 </body>
 </html>

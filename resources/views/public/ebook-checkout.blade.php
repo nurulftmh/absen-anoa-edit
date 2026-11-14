@@ -295,4 +295,5 @@
 
 
 </body>
+@include('public.partials.legal-footer')
 </html>
