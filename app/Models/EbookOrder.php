@@ -17,6 +17,7 @@ class EbookOrder extends Model
         'amount',
         'payment_status',
         'snap_token',
+        'access_token_hash',
         'payment_type',
         'midtrans_transaction_id',
         'paid_at',
