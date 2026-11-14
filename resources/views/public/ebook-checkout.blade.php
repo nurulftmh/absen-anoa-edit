@@ -4,8 +4,10 @@
 <head>
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>
         Checkout E-Book | PT ANOA Sejahtera Mandiri
@@ -15,15 +17,24 @@
 </head>
 
 
-<body class="bg-gray-50">
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
 
 <header class="bg-green-950">
 
-    <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+    <div class="max-w-6xl
+                mx-auto
+                px-6
+                py-5
+                flex
+                items-center
+                justify-between">
 
         <a
             href="{{ url('/') }}"
-            class="text-white font-bold text-xl"
+            class="text-white
+                   font-bold
+                   text-xl"
         >
             PT ANOA Sejahtera Mandiri
         </a>
@@ -31,7 +42,8 @@
 
         <a
             href="{{ route('public.published-books') }}"
-            class="text-green-100 hover:text-yellow-300"
+            class="text-green-100
+                   hover:text-yellow-300"
         >
             Kembali ke Buku
         </a>
@@ -42,15 +54,23 @@
 
 
 
-<main class="max-w-5xl mx-auto px-6 py-12">
+<main class="max-w-5xl
+             mx-auto
+             w-full
+             px-6
+             py-12
+             flex-1">
 
-    <div class="grid lg:grid-cols-2 gap-8">
+    <div class="grid
+                lg:grid-cols-2
+                gap-8">
 
 
         {{-- DETAIL BUKU --}}
         <div class="bg-white
                     rounded-3xl
-                    border border-gray-100
+                    border
+                    border-gray-100
                     shadow-sm
                     p-7">
 
@@ -83,9 +103,13 @@
 
             @if($publishedBook->publisher)
 
-                <p class="text-gray-500 text-sm mt-2">
+                <p class="text-gray-500
+                          text-sm
+                          mt-2">
+
                     Penerbit:
                     {{ $publishedBook->publisher }}
+
                 </p>
 
             @endif
@@ -93,14 +117,21 @@
 
             @if($publishedBook->isbn)
 
-                <p class="text-gray-400 text-sm mt-2">
+                <p class="text-gray-400
+                          text-sm
+                          mt-2">
+
                     ISBN {{ $publishedBook->isbn }}
+
                 </p>
 
             @endif
 
 
-            <div class="mt-7 pt-5 border-t border-gray-100">
+            <div class="mt-7
+                        pt-5
+                        border-t
+                        border-gray-100">
 
                 <p class="text-sm text-gray-500">
                     Total Pembayaran
@@ -132,7 +163,8 @@
         {{-- FORM PEMBELI --}}
         <div class="bg-white
                     rounded-3xl
-                    border border-gray-100
+                    border
+                    border-gray-100
                     shadow-sm
                     p-7">
 
@@ -145,8 +177,13 @@
             </h2>
 
 
-            <p class="text-gray-500 text-sm mt-2 mb-6">
+            <p class="text-gray-500
+                      text-sm
+                      mt-2
+                      mb-6">
+
                 Isi data berikut untuk melanjutkan pembayaran.
+
             </p>
 
 
@@ -155,7 +192,8 @@
 
                 <div class="mb-5
                             bg-red-50
-                            border border-red-200
+                            border
+                            border-red-200
                             text-red-700
                             rounded-2xl
                             p-4">
@@ -194,7 +232,13 @@
                 {{-- NAMA --}}
                 <div class="mb-4">
 
-                    <label class="block mb-2 text-sm font-semibold text-gray-700">
+                    <label
+                        class="block
+                               mb-2
+                               text-sm
+                               font-semibold
+                               text-gray-700"
+                    >
                         Nama Lengkap
                     </label>
 
@@ -218,7 +262,13 @@
                 {{-- EMAIL --}}
                 <div class="mb-4">
 
-                    <label class="block mb-2 text-sm font-semibold text-gray-700">
+                    <label
+                        class="block
+                               mb-2
+                               text-sm
+                               font-semibold
+                               text-gray-700"
+                    >
                         Email
                     </label>
 
@@ -235,8 +285,13 @@
                                focus:ring-green-700"
                     >
 
-                    <p class="text-xs text-gray-400 mt-1">
+
+                    <p class="text-xs
+                              text-gray-400
+                              mt-1">
+
                         Email akan digunakan untuk informasi pembelian.
+
                     </p>
 
                 </div>
@@ -246,7 +301,13 @@
                 {{-- WHATSAPP --}}
                 <div class="mb-6">
 
-                    <label class="block mb-2 text-sm font-semibold text-gray-700">
+                    <label
+                        class="block
+                               mb-2
+                               text-sm
+                               font-semibold
+                               text-gray-700"
+                    >
                         No. WhatsApp
                     </label>
 
@@ -294,6 +355,8 @@
 </main>
 
 
-</body>
 @include('public.partials.legal-footer')
+
+
+</body>
 </html>
