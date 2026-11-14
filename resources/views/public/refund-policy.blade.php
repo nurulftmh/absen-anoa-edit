@@ -240,7 +240,7 @@
                     <li>Nomor order.</li>
                     <li>Judul e-book.</li>
                     <li>Alasan pengajuan refund.</li>
-                    <li>Bukti pembayaran jika diperlukan.</li>
+                    <li>Bukti pembayaran.</li>
 
                 </ul>
 
