@@ -103,7 +103,7 @@
                             </h2>
 
                             <p class="text-gray-500 mt-2 leading-relaxed">
-                                Lakukan absen masuk sebelum bekerja dan absen pulang setelah 8 jam kerja.
+                                Lakukan absen masuk sebelum bekerja dan absen pulang setelah 9 jam kerja.
                             </p>
                         </div>
 

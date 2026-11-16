@@ -13,7 +13,7 @@
         Order E-Book | PT ANOA Sejahtera Mandiri
     </title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
 
     {{-- ========================================================= --}}
@@ -22,7 +22,6 @@
 
     @if(config('services.midtrans.is_production'))
 
-        {{-- PRODUCTION --}}
         <script
             src="https://app.midtrans.com/snap/snap.js"
             data-client-key="{{ config('services.midtrans.client_key') }}">
@@ -30,7 +29,6 @@
 
     @else
 
-        {{-- SANDBOX --}}
         <script
             src="https://app.sandbox.midtrans.com/snap/snap.js"
             data-client-key="{{ config('services.midtrans.client_key') }}">
